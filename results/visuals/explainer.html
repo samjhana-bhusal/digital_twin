@@ -1,0 +1,501 @@
+<title>Inside fieldtwin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a lab notebook read top to bottom - each section is one figure and
+   the tight caption that explains what it shows. Numbers always set in mono. */
+:root{
+  --bg:#f4f6f7; --surface:#ffffff; --surface-2:#eceff2;
+  --ink:#0f1419; --ink-2:#4a5663; --ink-3:#78848f;
+  --line:#dde3e8; --line-2:#c8d1d9;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --good:#008300; --warn:#eda100; --bad:#e34948;
+  --font-sans:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1116; --surface:#161b21; --surface-2:#1e242c;
+  --ink:#eef1f4; --ink-2:#a6b2be; --ink-3:#6f7d8a;
+  --line:#242c35; --line-2:#323c47;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --good:#0ca30c; --warn:#c98500; --bad:#e66767;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0e1116; --surface:#161b21; --surface-2:#1e242c;
+  --ink:#eef1f4; --ink-2:#a6b2be; --ink-3:#6f7d8a;
+  --line:#242c35; --line-2:#323c47;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --good:#0ca30c; --warn:#c98500; --bad:#e66767;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-sans);line-height:1.55;margin:0}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 72px}
+h1,h2,h3{text-wrap:balance;margin:0}
+h1{font-size:clamp(1.9rem,5vw,2.9rem);font-weight:700;letter-spacing:-.025em;line-height:1.1}
+h2{font-size:clamp(1.25rem,3vw,1.6rem);font-weight:600;letter-spacing:-.015em}
+h3{font-size:.95rem;font-weight:600}
+p{margin:0;max-width:68ch}
+a{color:var(--s1)}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.lede{font-size:1.08rem;color:var(--ink-2)}
+.muted{color:var(--ink-2)}
+.small{font-size:.86rem}
+header{padding-block:56px 36px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:18px}
+section{padding-block:44px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:18px}
+section:last-of-type{border-bottom:0}
+figure{margin:0;display:flex;flex-direction:column;gap:10px}
+figcaption{font-size:.86rem;color:var(--ink-2);max-width:68ch}
+img{max-width:100%;display:block;border-radius:6px;border:1px solid var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
+/* status strip */
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.strip div{background:var(--surface);padding:11px 13px;min-width:0}
+.strip .k{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.strip .v{font-family:var(--font-mono);font-size:1.22rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3}
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:.83rem}
+.legend span{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)}
+.sw{width:13px;height:3px;border-radius:2px;flex:none}
+.sw.dot{width:10px;height:10px;border-radius:50%}
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font-family:var(--font-sans);font-size:.83rem;font-weight:500;color:var(--ink);background:var(--surface);
+  border:1px solid var(--line-2);border-radius:6px;padding:7px 12px;cursor:pointer}
+button:hover{background:var(--surface-2)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+input[type=range]{flex:1;min-width:160px;accent-color:var(--s1)}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px}
+canvas{width:100%;height:auto;display:block;touch-action:none}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px}
+.readout div{background:var(--surface-2);border-radius:6px;padding:9px 11px;min-width:0}
+.readout .k{font-family:var(--font-mono);font-size:.64rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.readout .v{font-family:var(--font-mono);font-size:1.05rem;font-weight:600;font-variant-numeric:tabular-nums}
+/* tables */
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:460px}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line)}
+th{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+td.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right}
+tbody tr:last-child td{border-bottom:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.pill{display:inline-block;font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:3px 8px;border-radius:999px;border:1px solid currentColor}
+.pill.ok{color:var(--good)}.pill.no{color:var(--bad)}.pill.wip{color:var(--warn)}
+ul{margin:0;padding-left:1.1em;max-width:68ch}
+li{margin-block:4px}
+li::marker{color:var(--ink-3)}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.q{border-left:3px solid var(--s2);padding:10px 0 10px 15px;max-width:68ch}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">A walkthrough of what got built</div>
+  <h1>One arm, two worlds, one&nbsp;question</h1>
+  <p class="lede">A digital twin is normally reported as a success and a sim-to-real gap as a single number. Neither tells you anything useful. <strong>fieldtwin</strong> measures the part that matters: a twin is wrong in particular directions, and only some of them change what the robot does.</p>
+  <div class="strip" id="strip"></div>
+</header>
+
+<section>
+  <div class="eyebrow">1 — the setup</div>
+  <h2>A robot arm pushing a block</h2>
+  <p class="muted">Everything happens in this scene. A 3-link arm pushes a block across a table. There is a pipe and a bolt in the scene so that later, when a vision-language model is asked to find something, it has to pick the right object instead of the only object.</p>
+  <figure>
+    <img src="scene_oblique.png" alt="3D render: a three-link robot arm with an orange fingertip beside a red block, with a grey pipe, a small bolt and a green target zone on a checkered table." width="520" height="340">
+    <figcaption>The actual simulated scene, rendered from MuJoCo. The arm is 43&nbsp;cm fully extended. Only the orange fingertip can collide with anything — the links are visual, so every contact in a run is one we meant to happen.</figcaption>
+  </figure>
+  <p class="muted small">The whole world is <strong class="mono">6</strong> numbers: three joint angles, plus the block's x, y and rotation. That is small enough to simulate thousands of times on a laptop, which is the entire reason the project is feasible in three months without a GPU.</p>
+</section>
+
+<section>
+  <div class="eyebrow">2 — the idea</div>
+  <h2>The plant and the twin</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="color:var(--s1)">The plant</h3>
+      <p class="small muted" style="margin-top:6px">The ground truth. The only thing allowed to be called reality. You never touch it directly — every command goes through a simulated servo bus that is late, jittery and occasionally drops a packet, exactly like real hardware.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--s2)">The twin</h3>
+      <p class="small muted" style="margin-top:6px">What you get after trying to identify the plant's parameters from logged data. It shares the <em>same</em> scene file, so the only possible difference is the 18 numbers describing mass, friction, damping and servo gain.</p>
+    </div>
+  </div>
+  <p class="muted">Because the plant is simulated too, its true parameters are known. That means every claim about the gap can itself be checked — which a real robot never allows. That is the reason to do this in simulation, not an apology for it.</p>
+  <figure>
+    <img src="three_worlds.gif" alt="Animation of three side-by-side renders of the same push: the plant, a twin with error in an identifiable direction which visibly diverges, and a twin with error in an unidentifiable direction which moves identically to the plant." width="780" height="169">
+    <figcaption>The same commands sent to three worlds. Both twins are wrong by <strong class="mono">+57%</strong> along one direction in parameter space. The middle one drifts away from the plant. The right one is indistinguishable from it. That difference is the whole project.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="eyebrow">3 — the same run, side by side</div>
+  <h2>Watch them come apart</h2>
+  <p class="muted">Top-down view, drawn from the real logged trajectories. Scrub the timeline or press play. The two twins carry parameter errors of identical size — one in a direction the data can pin down, one in a direction it cannot.</p>
+  <div class="controls">
+    <button id="play" aria-pressed="false">Play</button>
+    <input type="range" id="scrub" min="0" max="109" value="0" step="1" aria-label="Timeline position">
+    <span class="mono small muted" id="tlabel">t = 0.00 s</span>
+  </div>
+  <div class="controls" role="group" aria-label="Which task to show">
+    <span class="eyebrow" style="margin-right:4px">Task</span>
+    <button class="task" data-task="familiar" aria-pressed="true">Like the training data</button>
+    <button class="task" data-task="novel" aria-pressed="false">A different push</button>
+  </div>
+  <div class="stage">
+    <canvas id="cv" width="1300" height="760" role="img" aria-label="Top-down animation of the arm pushing the block in three parallel worlds"></canvas>
+    <div class="legend" style="margin-top:10px">
+      <span><i class="sw" style="background:var(--s1)"></i>Plant (truth)</span>
+      <span><i class="sw" style="background:var(--s2)"></i>Twin — identifiable error</span>
+      <span><i class="sw" style="background:var(--s3)"></i>Twin — unidentifiable error</span>
+      <span><i class="sw dot" style="background:var(--ink-3)"></i>Pipe / bolt / target</span>
+    </div>
+    <div class="readout">
+      <div><div class="k">Block error — identifiable</div><div class="v" id="e_stiff" style="color:var(--s2)">—</div></div>
+      <div><div class="k">Block error — unidentifiable</div><div class="v" id="e_flat" style="color:var(--s3)">—</div></div>
+    </div>
+  </div>
+  <figcaption class="small">Block error is the distance between that twin's block and the plant's block at the current instant.</figcaption>
+</section>
+
+<section>
+  <div class="eyebrow">4 — the interface</div>
+  <h2>The wire is part of the physics</h2>
+  <p class="muted">On real hardware you never command a joint, you command a bus. It applies your setpoint about <span class="mono" id="lat">12</span>&nbsp;ms late, with jitter, sometimes loses a packet entirely, and reports position back on a finite grid. All of that arrives in your data looking like dynamics.</p>
+  <div class="grid2">
+    <figure>
+      <div class="card"><svg id="busfig" viewBox="0 0 440 210" aria-label="Chart comparing the commanded joint setpoint with the setpoint the servo was actually holding"></svg></div>
+      <figcaption>What was commanded against what the servo was actually holding. The steps are the 50&nbsp;Hz control rate; the shift between them is latency.</figcaption>
+    </figure>
+    <figure>
+      <div class="card"><svg id="encfig" viewBox="0 0 440 210" aria-label="Chart comparing true joint angle with the quantised encoder reading"></svg></div>
+      <figcaption>The encoder staircase. True angle against what a 12-bit encoder reports — one step is <span class="mono" id="lsb">—</span>.</figcaption>
+    </figure>
+  </div>
+  <div class="q"><p><strong>Already a result.</strong> With this bus running, a twin holding the plant's <em>exactly correct</em> parameters still cannot match the data better than <strong class="mono">7.9×</strong> the sensor noise. Before a single parameter is mis-fitted, the interface alone sets the floor.</p></div>
+</section>
+
+<section>
+  <div class="eyebrow">5 — identifiability</div>
+  <h2>What the data cannot tell you</h2>
+  <p class="muted">Fit the 18 parameters to logged data and look at the curvature of that fit. Directions with steep curvature are pinned down by the data. Flat directions are not — you could be badly wrong along them and the data would look the same.</p>
+  <div class="controls" role="group" aria-label="Which identification dataset">
+    <span class="eyebrow" style="margin-right:4px">Identification set</span>
+    <button class="spec" data-spec="push_only" aria-pressed="true">30 pushes</button>
+    <button class="spec" data-spec="mixed" aria-pressed="false">30 pushes + 8 free sweeps</button>
+  </div>
+  <figure>
+    <div class="card"><svg id="specfig" viewBox="0 0 440 290" aria-label="Bar chart of the eighteen curvature eigenvalues, each labelled by its dominant parameter"></svg></div>
+    <figcaption id="speccap">Each bar is one direction in parameter space, labelled by the parameter that dominates it.</figcaption>
+  </figure>
+  <div class="q"><p><strong>One direction is exactly flat, for a reason worth knowing.</strong> MuJoCo combines contact friction by taking the larger of the two surfaces. The fingertip's friction (<span class="mono">0.45</span>) sits below the block's (<span class="mono">0.50</span>), so it has <em>no effect whatsoever</em>. Not "hard to measure" — provably invisible. No amount of extra robot time would fix it, because the fix is in the contact model, not the data.</p></div>
+</section>
+
+<section>
+  <div class="eyebrow">6 — what the walkthrough turned up</div>
+  <h2>Adding more data made the answer worse</h2>
+  <p class="muted">Building this page surfaced something the first run had hidden. Free-space sweeps, with the block parked away, identify the arm parameters extremely sharply. That inflates the largest eigenvalue by orders of magnitude — and because "flat" was defined <em>relative</em> to the largest, every contact parameter then falls below the line and gets labelled unidentifiable, despite the pushes constraining it perfectly well.</p>
+  <div class="tw"><table>
+    <caption class="small muted" style="text-align:left;padding-bottom:9px">Same model, same noise, same 57% parameter error — only the identification set differs.</caption>
+    <thead><tr><th>Identification set</th><th class="num">Effective rank</th><th class="num">Error in a steep direction</th><th class="num">Error in a flat direction</th></tr></thead>
+    <tbody id="f5tbl"></tbody>
+  </table></div>
+  <figure>
+    <div class="card"><svg id="sweepfig" viewBox="0 0 440 230" aria-label="Chart of divergence against perturbation size for steep and flat directions on the mixed dataset"></svg></div>
+    <figcaption>On the mixed set the labels are inverted at every size, including the smallest. So this is not the local approximation breaking down at large errors — the classification itself is wrong.</figcaption>
+  </figure>
+  <div class="q"><p><strong>This sharpens the project rather than breaking it.</strong> Identifiability is a property of the model, the dataset <em>and</em> the noise assumptions together. A direction that is flat for your fitting loss can be exactly the direction your task is most sensitive to, because the loss is averaged over whatever episodes you happened to collect and the task is not. Two concrete consequences: the relative cutoff has to be replaced with one referenced to sensor noise, and the stiff/flat split has to be computed against a task-weighted metric.</p></div>
+</section>
+
+<section>
+  <div class="eyebrow">7 — status</div>
+  <h2>Where it stands</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Component</th><th>State</th><th>When</th></tr></thead>
+    <tbody>
+      <tr><td>Scene, 18 parameters, servo bus, rollouts, logging</td><td><span class="pill ok">working</span></td><td class="mono small">weeks 1–2</td></tr>
+      <tr><td>Identification loss + curvature spectrum</td><td><span class="pill ok">working</span></td><td class="mono small">weeks 1–2</td></tr>
+      <tr><td>Parameter recovery, noise-referenced cutoff, data-budget sweep</td><td><span class="pill wip">next</span></td><td class="mono small">weeks 3–5</td></tr>
+      <tr><td>Interface vs. dynamics ablation</td><td><span class="pill wip">next</span></td><td class="mono small">weeks 5–6</td></tr>
+      <tr><td>Learned world model, crossover horizon</td><td><span class="pill no">not started</span></td><td class="mono small">weeks 6–8</td></tr>
+      <tr><td>VLM grounding under field degradation</td><td><span class="pill no">not started</span></td><td class="mono small">weeks 9–10</td></tr>
+      <tr><td>Error budget and writeup</td><td><span class="pill no">not started</span></td><td class="mono small">weeks 11–12</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">Every figure on this page is generated by <span class="mono">experiments/make_visuals.py</span> from the simulator. Nothing here is drawn by hand or estimated.</p>
+</section>
+</div>
+
+<script type="application/json" id="D">{"geometry":{"links":[0.18,0.15,0.1],"box_half":0.035,"box_home":[0.3,0.06],"tip_r":0.012,"pipe":{"xy":[0.355,-0.15],"r":0.025},"bolt":{"xy":[0.17,-0.195],"r":0.009},"target":{"xy":[0.4,0.225],"r":0.05},"reach":0.43},"param_names":["m_link1","m_link2","m_link3","d_j1","d_j2","d_j3","f_j1","f_j2","f_j3","kp_a1","kp_a2","kp_a3","m_box","f_bx","f_by","f_bt","mu_box","mu_tip"],"theta_nominal":[0.25,0.18,0.13,0.06,0.045,0.03,0.004,0.003,0.0022,14.0,10.0,6.5,0.2,0.55,0.55,0.018,0.5,0.45],"spectra":{"push_only":{"eigvals":[0.0,7294176.654939946,9987311.831424816,15297769.814462865,20929391.656908356,43055357.766419105,71612004.08854085,81461777.358608,92455618.21916196,118586668.46249025,135472747.96084902,136932054.17878896,165318020.7730069,177878175.4398788,212511713.35441637,247318839.74034953,268175767.26499355,368388049.50447106],"eigvecs":[[0.0,-0.0199,0.0439,0.0488,0.0069,0.5908,0.5591,0.0369,0.2519,-0.1817,-0.0515,-0.2537,-0.0194,-0.2945,-0.0907,-0.1179,0.2282,-0.0862],[0.0,-0.023,0.0679,-0.0804,0.0022,-0.1032,-0.1203,0.2064,-0.5561,0.2937,0.009,-0.3803,-0.054,-0.3214,-0.2531,-0.2111,0.3817,0.1411],[0.0,0.0139,-0.0454,0.0702,-0.0163,-0.0423,-0.0007,-0.0895,0.2408,-0.1011,0.5666,0.168,-0.1395,0.06,-0.3125,0.0921,0.3005,0.588],[0.0,0.6592,-0.352,0.0946,-0.0041,0.0335,-0.0023,-0.5458,0.037,0.3198,-0.0505,-0.1104,-0.0008,-0.0564,-0.0336,-0.0005,0.0799,-0.0678],[0.0,-0.3146,0.2269,-0.1428,-0.1447,0.3106,-0.4688,-0.1928,0.4035,0.4657,-0.079,0.0319,-0.1905,-0.0487,-0.0224,-0.0833,0.1185,-0.0874],[0.0,0.0513,0.0653,-0.9207,0.1074,-0.2097,0.1879,-0.1763,0.1071,-0.0737,0.0219,-0.0339,0.0382,-0.0416,-0.0385,-0.0124,0.0129,-0.0047],[0.0,-0.18,0.3021,0.2368,0.8072,-0.209,0.1098,-0.2897,0.0694,0.1159,-0.0202,-0.0483,0.0248,-0.0667,-0.0314,0.0148,0.0263,-0.0323],[0.0,-0.13,-0.6787,-0.1823,0.4969,0.3359,-0.2119,0.2609,-0.0394,0.0415,0.0345,0.0878,-0.0354,0.0375,0.0331,0.02,0.0065,0.0137],[0.0,0.5894,0.4982,-0.109,0.2486,0.3672,-0.2281,0.2956,-0.0821,-0.048,0.0647,0.1174,-0.0572,0.1004,0.0486,0.0396,-0.0762,0.0797],[0.0,0.0011,0.0157,-0.0069,-0.0061,0.0246,0.0446,0.0275,-0.0965,-0.0293,-0.236,0.2728,-0.0406,0.2178,-0.7302,0.3292,0.1728,-0.3681],[0.0,0.0054,-0.0164,-0.0068,-0.0207,-0.0597,-0.0121,0.0768,0.0224,0.0421,0.1806,-0.2293,-0.4434,-0.43,0.0064,0.6371,-0.3249,-0.0958],[0.0,-0.2555,0.0934,-0.0808,-0.0573,0.4404,0.0301,-0.5038,-0.5548,-0.0681,0.1357,-0.0213,0.0841,0.1908,0.0707,0.2188,-0.1402,0.1425],[0.0,0.0016,-0.0028,-0.022,-0.0011,-0.0232,0.147,0.0285,-0.0119,0.0745,-0.6476,0.1564,-0.2018,0.026,0.2517,0.3192,0.2699,0.4975],[0.0,0.0047,-0.0068,0.0092,-0.0151,0.0313,-0.0482,-0.1505,-0.1543,-0.1284,-0.072,0.6461,-0.0228,-0.6515,-0.0727,-0.2385,-0.1486,0.0386],[0.0,0.0057,-0.0349,0.0111,0.0407,-0.0375,0.0328,-0.1269,-0.1043,-0.2321,-0.089,-0.0685,-0.7998,0.2521,-0.0605,-0.4215,-0.1231,-0.0356],[0.0,0.0252,-0.0189,0.0264,0.0343,-0.0257,-0.5286,-0.2052,0.0926,-0.6648,-0.2007,-0.2926,0.1133,-0.1601,-0.0252,0.0898,0.2263,-0.0131],[0.0,-0.0077,-0.0285,0.0054,0.0088,0.0627,-0.0368,0.0211,0.1399,0.0578,-0.2858,-0.2548,0.1877,-0.0077,-0.4597,-0.1308,-0.607,0.4378],[1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]],"eff_rank":17,"null":1,"stiff_dim":17,"flat_dim":1,"n_push":30,"n_free":0},"mixed":{"eigvals":[0.0,148113133.96625566,174516915.37987694,191770695.92993882,266362328.28043616,279482222.80206305,383068084.3736813,473652516.3132559,708702195.3706604,1291214399.788774,3620278996.1252537,4567764321.10726,10615458683.449203,16940530156.25107,55343708780.66847,116120547835.43515,441420155849.7109,931746400311.282],"eigvecs":[[0.0,-0.0137,0.0167,-0.0427,0.0028,0.1062,-0.4324,0.0277,-0.2792,0.197,-0.063,0.6663,-0.1367,0.1224,-0.2092,0.0031,0.0395,-0.3937],[0.0,-0.01,0.001,0.0039,-0.0145,-0.0101,0.1247,-0.0109,-0.213,-0.5392,0.461,-0.1229,0.2255,0.3531,-0.1602,0.1917,-0.0293,-0.4259],[0.0,0.0002,-0.0004,-0.0008,-0.0016,0.0073,-0.0324,-0.0079,0.0185,-0.0222,-0.0417,0.2312,0.6437,-0.1596,0.5807,0.0147,0.3848,-0.1322],[0.0,0.0009,0.004,-0.0103,-0.0257,-0.0061,0.0014,-0.3209,-0.5541,0.0163,-0.4529,-0.3819,-0.0296,-0.2306,-0.1124,0.2767,0.2555,-0.1714],[0.0,0.02,-0.0048,0.016,0.0086,-0.039,0.0604,-0.0828,0.2577,0.7211,0.2069,-0.3026,0.2215,0.0879,-0.1512,0.0878,-0.0169,-0.4228],[0.0,-0.0282,0.0108,-0.0548,0.0359,0.1626,-0.6261,0.4466,0.1176,-0.1024,-0.2784,-0.4175,0.1491,0.2783,0.0271,0.0041,-0.0152,-0.0074],[0.0,0.0098,-0.0148,0.0385,0.0087,-0.0915,0.4255,0.1318,0.3534,-0.0803,-0.5198,0.1676,-0.1184,0.4387,-0.0737,0.1985,0.2885,-0.1648],[0.0,-0.0126,-0.0031,0.0065,0.001,-0.026,0.3208,0.2279,-0.3052,0.067,-0.3527,0.0583,0.3888,0.0268,-0.0598,-0.3223,-0.592,-0.0954],[0.0,0.0349,-0.0055,0.0154,-0.0216,-0.0372,-0.2402,-0.6442,0.4226,-0.2883,-0.2376,-0.0008,0.0977,-0.0573,-0.0853,-0.2858,-0.2227,-0.2333],[0.0,0.0059,-0.0006,0.0002,0.001,0.0074,-0.1015,-0.0684,0.1546,-0.0084,-0.062,0.2047,0.3219,-0.1179,-0.221,0.7447,-0.3296,0.2926],[0.0,-0.0008,-0.0006,0.0008,0.0006,0.0019,0.0065,0.0215,0.0039,-0.0174,0.035,0.0475,0.3945,-0.0316,-0.6735,-0.3123,0.4373,0.3109],[0.0,0.0145,0.0049,-0.0011,-0.024,-0.0171,-0.0686,-0.4308,-0.2514,0.2109,0.0155,0.0057,0.0999,0.6966,0.1957,-0.0397,-0.0244,0.4062],[0.0,0.0855,-0.5269,0.0214,0.1498,-0.8074,-0.1745,0.0798,-0.0573,-0.0068,0.0049,0.0063,0.001,0.0006,-0.0,0.0005,-0.0,-0.0001],[0.0,0.3412,-0.7576,-0.2323,-0.0264,0.4946,0.0945,-0.036,0.0139,0.0007,0.0023,0.0003,-0.0023,0.0011,0.0,-0.0001,-0.0,0.0],[0.0,0.1492,-0.1434,0.9646,-0.0586,0.1393,-0.0491,0.0244,-0.0305,0.0008,-0.0015,0.0001,-0.0023,0.0001,0.0002,-0.0001,0.0,-0.0],[0.0,0.9168,0.3564,-0.0696,0.1161,-0.105,-0.021,0.0442,-0.0252,-0.0131,0.0006,-0.0001,0.0008,-0.0003,0.0003,-0.0,0.0,-0.0],[0.0,-0.1019,0.0092,0.0582,0.9781,0.1512,0.0434,-0.0675,-0.013,-0.0087,0.0027,0.002,0.0008,-0.0004,0.0008,-0.0002,0.0001,-0.0],[1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-0.0]],"eff_rank":9,"null":1,"stiff_dim":9,"flat_dim":9,"n_push":30,"n_free":8}},"demoA":{"familiar":{"stiff":{"whitened_rms":6.576016973103446,"final_box_mm":8.768839574654356,"max_box_mm":8.788362239513681},"flat":{"whitened_rms":2.386311205366018e-11,"final_box_mm":2.0829745862501957e-12,"max_box_mm":1.7819120413866916e-11}},"novel":{"stiff":{"whitened_rms":5.776580229202016,"final_box_mm":5.600428719544385,"max_box_mm":5.600428719544385},"flat":{"whitened_rms":8.742402267437876e-12,"final_box_mm":1.5043266190048429e-12,"max_box_mm":2.179373532888161e-12}}},"sweep":[{"mag":0.01,"stiff":0.19889507267589251,"flat":0.2610940731123306,"ratio":0.7617755175557808},{"mag":0.03,"stiff":0.2091170165715116,"flat":0.4437805632131685,"ratio":0.47121715979945467},{"mag":0.1,"stiff":0.34401034473228365,"flat":1.2666607581373621,"ratio":0.2715883811212044},{"mag":0.45,"stiff":1.211919359784812,"flat":5.003736136036035,"ratio":0.24220289136686887}],"perturbations":{"magnitude_log":0.45,"pct":56.831218549016896,"d_stiff":[-0.00866,-0.05296,-0.02269,0.02435,0.03094,-0.02013,-0.01241,0.18619,-0.04696,-0.20016,0.20277,0.1745,-0.08798,0.10453,0.06816,-0.14963,-0.05286,0.0],"d_flat":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-0.45]},"runs":{"familiar":{"plant":{"t":[0.0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2,0.22,0.24,0.26,0.28,0.3,0.32,0.34,0.36,0.38,0.4,0.42,0.44,0.46,0.48,0.5,0.52,0.54,0.56,0.58,0.6,0.62,0.64,0.66,0.68,0.7,0.72,0.74,0.76,0.78,0.8,0.82,0.84,0.86,0.88,0.9,0.92,0.94,0.96,0.98,1.0,1.02,1.04,1.06,1.08,1.1,1.12,1.14,1.16,1.18,1.2,1.22,1.24,1.26,1.28,1.3,1.32,1.34,1.36,1.38,1.4,1.42,1.44,1.46,1.48,1.5,1.52,1.54,1.56,1.58,1.6,1.62,1.64,1.66,1.68,1.7,1.72,1.74,1.76,1.78,1.8,1.82,1.84,1.86,1.88,1.9,1.92,1.94,1.96,1.98,2.0,2.02,2.04,2.06,2.08,2.1,2.12,2.14,2.16,2.18],"q":[[-1.04491,1.95344,0.10674],[-1.04491,1.95344,0.10674],[-1.04491,1.95344,0.10673],[-1.04488,1.95339,0.10672],[-1.04464,1.95309,0.10669],[-1.04392,1.95223,0.10644],[-1.04256,1.95074,0.10571],[-1.0406,1.94866,0.10467],[-1.03821,1.94623,0.10358],[-1.03559,1.94373,0.10246],[-1.03288,1.94128,0.10131],[-1.03003,1.93877,0.10011],[-1.02695,1.93595,0.09881],[-1.02351,1.93261,0.09728],[-1.01968,1.92872,0.09549],[-1.01554,1.92439,0.09351],[-1.01118,1.91979,0.09142],[-1.00668,1.91509,0.08928],[-1.00204,1.91034,0.08712],[-0.99719,1.90544,0.0849],[-0.99203,1.90028,0.08257],[-0.98654,1.89477,0.0801],[-0.98073,1.88892,0.07747],[-0.97469,1.88278,0.07473],[-0.9685,1.87645,0.07192],[-0.96222,1.86997,0.06905],[-0.95584,1.86331,0.06611],[-0.95,1.85749,0.06407],[-0.94613,1.85519,0.06408],[-0.94135,1.85209,0.06248],[-0.93514,1.84698,0.06056],[-0.92726,1.83934,0.05771],[-0.91799,1.82948,0.05316],[-0.90818,1.8183,0.04776],[-0.89875,1.80691,0.04258],[-0.89041,1.79647,0.03813],[-0.88318,1.78731,0.0342],[-0.87685,1.7795,0.03099],[-0.8707,1.77229,0.02824],[-0.86396,1.76481,0.02545],[-0.856,1.75623,0.02198],[-0.84678,1.74642,0.01782],[-0.83658,1.73548,0.01315],[-0.82619,1.7243,0.00847],[-0.81614,1.71342,0.00394],[-0.80684,1.70318,-0.00022],[-0.79835,1.6936,-0.00395],[-0.79045,1.68435,-0.00747],[-0.78269,1.67487,-0.01105],[-0.77447,1.66443,-0.01511],[-0.76564,1.65302,-0.01957],[-0.75613,1.64071,-0.02448],[-0.74615,1.62801,-0.02956],[-0.73603,1.61549,-0.03451],[-0.72618,1.60379,-0.03898],[-0.71668,1.59293,-0.04302],[-0.70743,1.58262,-0.04677],[-0.69841,1.5726,-0.0503],[-0.68924,1.56211,-0.05402],[-0.67971,1.55065,-0.05818],[-0.66987,1.53827,-0.06274],[-0.65989,1.52528,-0.06755],[-0.65005,1.51225,-0.07233],[-0.64033,1.49924,-0.07706],[-0.63114,1.48711,-0.08131],[-0.62209,1.47532,-0.08538],[-0.6131,1.46378,-0.08928],[-0.60386,1.452,-0.09326],[-0.59432,1.43986,-0.09737],[-0.58462,1.42759,-0.10152],[-0.57468,1.41496,-0.10579],[-0.56485,1.40249,-0.10995],[-0.55525,1.39031,-0.11394],[-0.54591,1.37839,-0.11777],[-0.53688,1.36677,-0.12143],[-0.52793,1.355,-0.12511],[-0.51902,1.34307,-0.12884],[-0.51006,1.3308,-0.13269],[-0.50108,1.31838,-0.13657],[-0.49225,1.30618,-0.14034],[-0.48353,1.29418,-0.14397],[-0.47505,1.28272,-0.14737],[-0.46666,1.27149,-0.15063],[-0.45831,1.26043,-0.15379],[-0.44995,1.24941,-0.15693],[-0.44166,1.23855,-0.16],[-0.43344,1.22777,-0.16302],[-0.42539,1.21718,-0.16595],[-0.41762,1.2069,-0.16874],[-0.41015,1.19696,-0.1714],[-0.40298,1.18732,-0.17391],[-0.39592,1.17767,-0.17638],[-0.38912,1.16845,-0.1787],[-0.38253,1.15962,-0.18096],[-0.37611,1.15102,-0.18314],[-0.36989,1.14269,-0.18522],[-0.3639,1.13462,-0.18724],[-0.35831,1.12717,-0.18905],[-0.35319,1.12044,-0.19061],[-0.34836,1.11411,-0.192],[-0.34374,1.10806,-0.19332],[-0.33943,1.10251,-0.1947],[-0.33557,1.09756,-0.19593],[-0.33201,1.09275,-0.19694],[-0.32891,1.08869,-0.19768],[-0.32617,1.08515,-0.19849],[-0.32377,1.08205,-0.19925],[-0.3218,1.07946,-0.19986],[-0.32032,1.07746,-0.20029],[-0.31937,1.07617,-0.20058]],"box":[[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.00014,1e-05,-6e-05],[0.00064,4e-05,-0.00022],[0.00111,7e-05,-0.00035],[0.00198,0.00011,-0.00056],[0.00337,0.00016,-0.00081],[0.00518,0.0002,-0.00105],[0.00728,0.00023,-0.00127],[0.00943,0.00026,-0.00146],[0.01142,0.00029,-0.00163],[0.01308,0.00031,-0.00177],[0.01449,0.00033,-0.00192],[0.01579,0.00036,-0.0021],[0.01713,0.00039,-0.00233],[0.0186,0.00042,-0.00257],[0.02029,0.00045,-0.00283],[0.02212,0.00049,-0.00312],[0.02405,0.00052,-0.00344],[0.02592,0.00054,-0.00373],[0.02765,0.00057,-0.00397],[0.02923,0.00059,-0.0042],[0.03077,0.00062,-0.00447],[0.03239,0.00065,-0.00483],[0.03412,0.00068,-0.00529],[0.03607,0.00072,-0.00589],[0.03816,0.00075,-0.00648],[0.04029,0.00078,-0.00708],[0.04233,0.0008,-0.00757],[0.04422,0.00083,-0.00808],[0.0459,0.00085,-0.00858],[0.0474,0.00088,-0.00916],[0.0489,0.0009,-0.01027],[0.05048,0.00094,-0.01214],[0.05216,0.00097,-0.01468],[0.054,0.001,-0.01774],[0.05595,0.00103,-0.02104],[0.05795,0.00106,-0.02428],[0.05983,0.00108,-0.0267],[0.06166,0.00111,-0.02893],[0.06336,0.00113,-0.03077],[0.065,0.00116,-0.03286],[0.06659,0.00118,-0.03524],[0.0682,0.00121,-0.03822],[0.06988,0.00123,-0.04206],[0.07151,0.00126,-0.04588],[0.07312,0.00128,-0.04992],[0.07466,0.00131,-0.05392],[0.07611,0.00133,-0.05784],[0.07754,0.00136,-0.06224],[0.07894,0.00138,-0.06713],[0.08036,0.0014,-0.07304],[0.08179,0.00143,-0.07975],[0.0832,0.00145,-0.0872],[0.08459,0.00147,-0.0953],[0.08588,0.00149,-0.10352],[0.0871,0.00151,-0.11211],[0.08823,0.00153,-0.12081],[0.08929,0.00155,-0.12982],[0.09028,0.00157,-0.13923],[0.09125,0.00159,-0.14931],[0.09216,0.00161,-0.15984],[0.093,0.00163,-0.17079],[0.09379,0.00164,-0.1822],[0.09452,0.00166,-0.19406],[0.09521,0.00167,-0.20648],[0.09583,0.00169,-0.21904],[0.09641,0.0017,-0.23202],[0.09697,0.00171,-0.24533],[0.09748,0.00172,-0.25876],[0.09793,0.00173,-0.27222],[0.0983,0.00174,-0.28541],[0.09862,0.00175,-0.29835],[0.09888,0.00175,-0.31126],[0.0991,0.00176,-0.32404],[0.09927,0.00176,-0.33667],[0.0994,0.00177,-0.34889],[0.09949,0.00177,-0.36032],[0.09956,0.00177,-0.37043],[0.09963,0.00177,-0.37979],[0.09969,0.00177,-0.38808],[0.09974,0.00177,-0.39514],[0.09979,0.00176,-0.40078],[0.09984,0.00176,-0.40475],[0.09988,0.00176,-0.40686]],"tip":[[0.23533,0.04757],[0.23533,0.04757],[0.23533,0.04757],[0.23534,0.04757],[0.23538,0.04758],[0.23553,0.04761],[0.23582,0.04767],[0.23623,0.04778],[0.23669,0.04793],[0.23717,0.04812],[0.23764,0.04834],[0.23811,0.04859],[0.23863,0.04884],[0.23926,0.0491],[0.24,0.04935],[0.24083,0.04961],[0.24172,0.04988],[0.24262,0.05016],[0.24353,0.05047],[0.24446,0.05081],[0.24542,0.05119],[0.24645,0.05159],[0.24755,0.05202],[0.24869,0.05246],[0.24987,0.05291],[0.25108,0.05336],[0.25231,0.05381],[0.25341,0.0543],[0.25369,0.05493],[0.25414,0.05559],[0.25492,0.0563],[0.25621,0.05703],[0.25798,0.0577],[0.26009,0.05827],[0.26224,0.05874],[0.26422,0.05911],[0.26596,0.05941],[0.26741,0.05972],[0.26868,0.0601],[0.26999,0.06058],[0.27144,0.06121],[0.27312,0.06194],[0.27499,0.06276],[0.2769,0.06361],[0.27875,0.06444],[0.28049,0.0652],[0.2821,0.06586],[0.28365,0.06644],[0.28524,0.06693],[0.287,0.06738],[0.28893,0.06782],[0.29101,0.06829],[0.29315,0.06882],[0.29522,0.06944],[0.29711,0.07015],[0.29881,0.07094],[0.30038,0.07177],[0.30188,0.07261],[0.30345,0.07341],[0.30518,0.07415],[0.30708,0.0748],[0.30908,0.07539],[0.31109,0.07592],[0.31309,0.07643],[0.31493,0.07696],[0.31668,0.07752],[0.31836,0.07812],[0.32003,0.07875],[0.32175,0.07942],[0.32346,0.08012],[0.32521,0.08083],[0.32692,0.08155],[0.32857,0.08226],[0.33016,0.08296],[0.3317,0.08362],[0.33325,0.08423],[0.3348,0.0848],[0.33642,0.08532],[0.33804,0.08582],[0.33963,0.08631],[0.34115,0.08681],[0.34259,0.08735],[0.34396,0.08792],[0.34528,0.08851],[0.34657,0.08912],[0.34784,0.08975],[0.34907,0.09037],[0.35027,0.09098],[0.35142,0.09156],[0.35253,0.09212],[0.35359,0.09264],[0.35465,0.09312],[0.35565,0.0936],[0.35659,0.09409],[0.3575,0.09457],[0.35836,0.09504],[0.35919,0.09548],[0.35996,0.09591],[0.36063,0.09634],[0.36124,0.09675],[0.36183,0.09715],[0.36236,0.09753],[0.36284,0.09788],[0.3633,0.09816],[0.36368,0.09844],[0.36401,0.09869],[0.3643,0.0989],[0.36455,0.09907],[0.36474,0.09919],[0.36487,0.09927]]},"twin_stiff":{"t":[0.0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2,0.22,0.24,0.26,0.28,0.3,0.32,0.34,0.36,0.38,0.4,0.42,0.44,0.46,0.48,0.5,0.52,0.54,0.56,0.58,0.6,0.62,0.64,0.66,0.68,0.7,0.72,0.74,0.76,0.78,0.8,0.82,0.84,0.86,0.88,0.9,0.92,0.94,0.96,0.98,1.0,1.02,1.04,1.06,1.08,1.1,1.12,1.14,1.16,1.18,1.2,1.22,1.24,1.26,1.28,1.3,1.32,1.34,1.36,1.38,1.4,1.42,1.44,1.46,1.48,1.5,1.52,1.54,1.56,1.58,1.6,1.62,1.64,1.66,1.68,1.7,1.72,1.74,1.76,1.78,1.8,1.82,1.84,1.86,1.88,1.9,1.92,1.94,1.96,1.98,2.0,2.02,2.04,2.06,2.08,2.1,2.12,2.14,2.16,2.18],"q":[[-1.04491,1.95344,0.10674],[-1.04491,1.95344,0.10674],[-1.04491,1.95344,0.10673],[-1.04488,1.95339,0.10672],[-1.04468,1.95306,0.10667],[-1.04403,1.95214,0.10632],[-1.04278,1.95054,0.10552],[-1.04098,1.94838,0.10449],[-1.03874,1.94595,0.10341],[-1.03623,1.94354,0.10229],[-1.03351,1.94119,0.10117],[-1.03053,1.9387,0.10002],[-1.02724,1.93582,0.09869],[-1.0236,1.93237,0.0971],[-1.01968,1.9284,0.09527],[-1.01558,1.92408,0.0933],[-1.01138,1.91959,0.09125],[-1.00708,1.91503,0.08917],[-1.00259,1.91032,0.08703],[-0.99779,1.90534,0.08478],[-0.99262,1.90002,0.08238],[-0.98708,1.89435,0.07983],[-0.98124,1.88843,0.07718],[-0.9752,1.88236,0.07446],[-0.96902,1.87617,0.07171],[-0.96272,1.86981,0.0689],[-0.95626,1.86318,0.06597],[-0.95054,1.85767,0.06423],[-0.94675,1.85562,0.0643],[-0.94219,1.85245,0.06275],[-0.93629,1.84669,0.06064],[-0.92876,1.83798,0.05713],[-0.9198,1.82687,0.05174],[-0.91033,1.8149,0.04606],[-0.90101,1.80334,0.04084],[-0.89255,1.79363,0.03663],[-0.88509,1.78607,0.03352],[-0.87825,1.77989,0.03121],[-0.87147,1.77391,0.02909],[-0.86423,1.767,0.02657],[-0.85598,1.75805,0.02292],[-0.8467,1.74695,0.01808],[-0.83705,1.73483,0.01294],[-0.82721,1.72227,0.00741],[-0.81788,1.71063,0.00252],[-0.80926,1.70045,-0.00152],[-0.80114,1.69148,-0.00495],[-0.79323,1.6831,-0.008],[-0.78489,1.67409,-0.01138],[-0.77604,1.66414,-0.01511],[-0.7664,1.65269,-0.01968],[-0.7562,1.64011,-0.02478],[-0.74598,1.62738,-0.02985],[-0.73609,1.61521,-0.03464],[-0.72669,1.60391,-0.03894],[-0.71779,1.59352,-0.04268],[-0.70903,1.58333,-0.0463],[-0.70013,1.57277,-0.05008],[-0.69075,1.56122,-0.05431],[-0.68098,1.54883,-0.0589],[-0.67089,1.53583,-0.06378],[-0.66081,1.52285,-0.06861],[-0.65098,1.51045,-0.07309],[-0.64146,1.49873,-0.07719],[-0.63223,1.48765,-0.08092],[-0.62291,1.47642,-0.0847],[-0.61337,1.46475,-0.08865],[-0.60353,1.45242,-0.09288],[-0.59358,1.43977,-0.09723],[-0.58358,1.42687,-0.10167],[-0.57385,1.41436,-0.10587],[-0.56442,1.4023,-0.10981],[-0.55523,1.39065,-0.1135],[-0.54609,1.37902,-0.11715],[-0.53678,1.36708,-0.12092],[-0.52739,1.35502,-0.12471],[-0.51794,1.34286,-0.12853],[-0.5084,1.3305,-0.13244],[-0.4991,1.31859,-0.13607],[-0.48999,1.30694,-0.13957],[-0.48112,1.2957,-0.14284],[-0.47233,1.2845,-0.14605],[-0.46362,1.27346,-0.14917],[-0.4548,1.26209,-0.15249],[-0.44608,1.25084,-0.15569],[-0.43753,1.23983,-0.15879],[-0.42916,1.22892,-0.1619],[-0.42118,1.21861,-0.16464],[-0.41351,1.20879,-0.16715],[-0.40593,1.19905,-0.16968],[-0.39831,1.18913,-0.17232],[-0.3908,1.17928,-0.17493],[-0.38365,1.17009,-0.17731],[-0.37685,1.16136,-0.17952],[-0.37026,1.15269,-0.18172],[-0.36397,1.14443,-0.18364],[-0.35804,1.13675,-0.18548],[-0.35234,1.12936,-0.18732],[-0.34681,1.12194,-0.18922],[-0.34168,1.11506,-0.19079],[-0.33707,1.10898,-0.19221],[-0.33297,1.10357,-0.19362],[-0.32937,1.09871,-0.19475],[-0.32613,1.09419,-0.19556],[-0.32311,1.08981,-0.19661],[-0.32046,1.08619,-0.19746],[-0.31815,1.08304,-0.19828],[-0.31623,1.08037,-0.19894],[-0.31478,1.07829,-0.19942],[-0.31386,1.07692,-0.19976]],"box":[[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.00016,2e-05,-7e-05],[0.00061,5e-05,-0.00022],[0.00112,8e-05,-0.00038],[0.00213,0.00013,-0.0006],[0.00377,0.00018,-0.00085],[0.00588,0.00022,-0.00108],[0.00824,0.00026,-0.00129],[0.01043,0.00029,-0.00145],[0.01222,0.00031,-0.00158],[0.01353,0.00033,-0.00171],[0.01449,0.00036,-0.00186],[0.01539,0.00039,-0.00208],[0.01657,0.00043,-0.00245],[0.01813,0.00047,-0.00311],[0.02007,0.00052,-0.00379],[0.02236,0.00056,-0.00441],[0.02461,0.00059,-0.0047],[0.02667,0.00062,-0.00492],[0.02842,0.00064,-0.00513],[0.02988,0.00067,-0.00538],[0.03123,0.0007,-0.00582],[0.03262,0.00073,-0.00669],[0.03429,0.00077,-0.00848],[0.03619,0.00081,-0.01084],[0.03825,0.00085,-0.01335],[0.04035,0.00088,-0.01568],[0.04234,0.00091,-0.01752],[0.04411,0.00093,-0.01888],[0.04572,0.00096,-0.02029],[0.04725,0.00099,-0.02215],[0.04885,0.00103,-0.0248],[0.05058,0.00106,-0.02842],[0.05247,0.00109,-0.03326],[0.05442,0.00113,-0.0388],[0.05631,0.00115,-0.04455],[0.05808,0.00118,-0.05013],[0.05968,0.00121,-0.05543],[0.06119,0.00123,-0.06099],[0.06264,0.00126,-0.06702],[0.06415,0.00129,-0.07427],[0.06573,0.00132,-0.08289],[0.06737,0.00134,-0.09295],[0.06896,0.00137,-0.10371],[0.07047,0.00139,-0.11511],[0.07185,0.00141,-0.12687],[0.07315,0.00143,-0.13919],[0.07439,0.00146,-0.15224],[0.07559,0.00148,-0.1662],[0.07683,0.0015,-0.18138],[0.07808,0.00152,-0.19762],[0.07924,0.00153,-0.21434],[0.08034,0.00155,-0.23169],[0.08132,0.00156,-0.24923],[0.08223,0.00157,-0.26725],[0.08305,0.00159,-0.28562],[0.08388,0.0016,-0.30486],[0.08466,0.00161,-0.32456],[0.08543,0.00161,-0.3449],[0.08615,0.00162,-0.36559],[0.08675,0.00162,-0.38616],[0.0873,0.00163,-0.40689],[0.08781,0.00163,-0.42786],[0.08827,0.00163,-0.44904],[0.08869,0.00163,-0.47027],[0.08907,0.00162,-0.49141],[0.08941,0.00162,-0.51265],[0.08968,0.00162,-0.53378],[0.08988,0.00161,-0.55446],[0.09007,0.0016,-0.57472],[0.09022,0.00159,-0.59462],[0.09035,0.00158,-0.61396],[0.09045,0.00156,-0.63236],[0.09055,0.00155,-0.64969],[0.09063,0.00153,-0.66584],[0.09068,0.00151,-0.68032],[0.09074,0.0015,-0.69291],[0.09079,0.00148,-0.70399],[0.09085,0.00146,-0.71356],[0.09091,0.00144,-0.72211],[0.09097,0.00142,-0.72942],[0.09102,0.0014,-0.73528],[0.09107,0.00138,-0.73943],[0.09112,0.00136,-0.74162]],"tip":[[0.23533,0.04757],[0.23533,0.04757],[0.23533,0.04757],[0.23534,0.04757],[0.23539,0.04757],[0.23556,0.04757],[0.23588,0.04759],[0.23632,0.04764],[0.23679,0.04775],[0.23726,0.04793],[0.2377,0.04817],[0.23815,0.04845],[0.23868,0.04875],[0.23932,0.04903],[0.24008,0.0493],[0.24091,0.04955],[0.24178,0.04979],[0.24266,0.05005],[0.24357,0.05033],[0.24451,0.05065],[0.24552,0.051],[0.24659,0.05138],[0.2477,0.0518],[0.24883,0.05225],[0.24997,0.05272],[0.25115,0.0532],[0.25237,0.05368],[0.2534,0.05419],[0.25362,0.05485],[0.25408,0.05546],[0.25502,0.056],[0.25659,0.05644],[0.2587,0.05679],[0.26101,0.05712],[0.26323,0.0575],[0.26505,0.058],[0.26641,0.05864],[0.26743,0.05937],[0.26837,0.06015],[0.26945,0.06091],[0.271,0.06155],[0.27295,0.06209],[0.27513,0.06256],[0.27741,0.06299],[0.2795,0.06346],[0.28128,0.06402],[0.28279,0.06467],[0.28413,0.0654],[0.28557,0.06613],[0.28717,0.06686],[0.28906,0.06752],[0.29115,0.06814],[0.29327,0.06875],[0.29529,0.06937],[0.29712,0.07004],[0.29876,0.07074],[0.30033,0.07145],[0.30194,0.07215],[0.30371,0.07281],[0.30565,0.07342],[0.30768,0.07401],[0.30968,0.07462],[0.31157,0.07526],[0.31331,0.07596],[0.31491,0.07672],[0.3165,0.07748],[0.31815,0.07823],[0.31989,0.07896],[0.32169,0.07965],[0.32352,0.08032],[0.32526,0.08099],[0.32692,0.08167],[0.32849,0.08236],[0.33003,0.08305],[0.33159,0.08374],[0.33317,0.08443],[0.33474,0.08513],[0.33632,0.08582],[0.33782,0.08654],[0.33927,0.08725],[0.34062,0.08798],[0.34197,0.08869],[0.34326,0.08942],[0.3446,0.09012],[0.34591,0.09082],[0.34717,0.09151],[0.34842,0.09216],[0.34958,0.09281],[0.35065,0.09348],[0.35169,0.09412],[0.35276,0.09475],[0.35382,0.09534],[0.35479,0.09595],[0.35569,0.09655],[0.35658,0.09709],[0.35743,0.09761],[0.35819,0.09813],[0.35893,0.09862],[0.35967,0.09905],[0.36037,0.09945],[0.36096,0.09983],[0.3615,0.10017],[0.36197,0.10045],[0.36241,0.10069],[0.36286,0.10087],[0.36322,0.10106],[0.36353,0.10123],[0.3638,0.10136],[0.36401,0.10145],[0.36415,0.10149]]},"twin_flat":{"t":[0.0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2,0.22,0.24,0.26,0.28,0.3,0.32,0.34,0.36,0.38,0.4,0.42,0.44,0.46,0.48,0.5,0.52,0.54,0.56,0.58,0.6,0.62,0.64,0.66,0.68,0.7,0.72,0.74,0.76,0.78,0.8,0.82,0.84,0.86,0.88,0.9,0.92,0.94,0.96,0.98,1.0,1.02,1.04,1.06,1.08,1.1,1.12,1.14,1.16,1.18,1.2,1.22,1.24,1.26,1.28,1.3,1.32,1.34,1.36,1.38,1.4,1.42,1.44,1.46,1.48,1.5,1.52,1.54,1.56,1.58,1.6,1.62,1.64,1.66,1.68,1.7,1.72,1.74,1.76,1.78,1.8,1.82,1.84,1.86,1.88,1.9,1.92,1.94,1.96,1.98,2.0,2.02,2.04,2.06,2.08,2.1,2.12,2.14,2.16,2.18],"q":[[-1.04491,1.95344,0.10674],[-1.04491,1.95344,0.10674],[-1.04491,1.95344,0.10673],[-1.04488,1.95339,0.10672],[-1.04464,1.95309,0.10669],[-1.04392,1.95223,0.10644],[-1.04256,1.95074,0.10571],[-1.0406,1.94866,0.10467],[-1.03821,1.94623,0.10358],[-1.03559,1.94373,0.10246],[-1.03288,1.94128,0.10131],[-1.03003,1.93877,0.10011],[-1.02695,1.93595,0.09881],[-1.02351,1.93261,0.09728],[-1.01968,1.92872,0.09549],[-1.01554,1.92439,0.09351],[-1.01118,1.91979,0.09142],[-1.00668,1.91509,0.08928],[-1.00204,1.91034,0.08712],[-0.99719,1.90544,0.0849],[-0.99203,1.90028,0.08257],[-0.98654,1.89477,0.0801],[-0.98073,1.88892,0.07747],[-0.97469,1.88278,0.07473],[-0.9685,1.87645,0.07192],[-0.96222,1.86997,0.06905],[-0.95584,1.86331,0.06611],[-0.95,1.85749,0.06407],[-0.94613,1.85519,0.06408],[-0.94135,1.85209,0.06248],[-0.93514,1.84698,0.06056],[-0.92726,1.83934,0.05771],[-0.91799,1.82948,0.05316],[-0.90818,1.8183,0.04776],[-0.89875,1.80691,0.04258],[-0.89041,1.79647,0.03813],[-0.88318,1.78731,0.0342],[-0.87685,1.7795,0.03099],[-0.8707,1.77229,0.02824],[-0.86396,1.76481,0.02545],[-0.856,1.75623,0.02198],[-0.84678,1.74642,0.01782],[-0.83658,1.73548,0.01315],[-0.82619,1.7243,0.00847],[-0.81614,1.71342,0.00394],[-0.80684,1.70318,-0.00022],[-0.79835,1.6936,-0.00395],[-0.79045,1.68435,-0.00747],[-0.78269,1.67487,-0.01105],[-0.77447,1.66443,-0.01511],[-0.76564,1.65302,-0.01957],[-0.75613,1.64071,-0.02448],[-0.74615,1.62801,-0.02956],[-0.73603,1.61549,-0.03451],[-0.72618,1.60379,-0.03898],[-0.71668,1.59293,-0.04302],[-0.70743,1.58262,-0.04677],[-0.69841,1.5726,-0.0503],[-0.68924,1.56211,-0.05402],[-0.67971,1.55065,-0.05818],[-0.66987,1.53827,-0.06274],[-0.65989,1.52528,-0.06755],[-0.65005,1.51225,-0.07233],[-0.64033,1.49924,-0.07706],[-0.63114,1.48711,-0.08131],[-0.62209,1.47532,-0.08538],[-0.6131,1.46378,-0.08928],[-0.60386,1.452,-0.09326],[-0.59432,1.43986,-0.09737],[-0.58462,1.42759,-0.10152],[-0.57468,1.41496,-0.10579],[-0.56485,1.40249,-0.10995],[-0.55525,1.39031,-0.11394],[-0.54591,1.37839,-0.11777],[-0.53688,1.36677,-0.12143],[-0.52793,1.355,-0.12511],[-0.51902,1.34307,-0.12884],[-0.51006,1.3308,-0.13269],[-0.50108,1.31838,-0.13657],[-0.49225,1.30618,-0.14034],[-0.48353,1.29418,-0.14397],[-0.47505,1.28272,-0.14737],[-0.46666,1.27149,-0.15063],[-0.45831,1.26043,-0.15379],[-0.44995,1.24941,-0.15693],[-0.44166,1.23855,-0.16],[-0.43344,1.22777,-0.16302],[-0.42539,1.21718,-0.16595],[-0.41762,1.2069,-0.16874],[-0.41015,1.19696,-0.1714],[-0.40298,1.18732,-0.17391],[-0.39592,1.17767,-0.17638],[-0.38912,1.16845,-0.1787],[-0.38253,1.15962,-0.18096],[-0.37611,1.15102,-0.18314],[-0.36989,1.14269,-0.18522],[-0.3639,1.13462,-0.18724],[-0.35831,1.12717,-0.18905],[-0.35319,1.12044,-0.19061],[-0.34836,1.11411,-0.192],[-0.34374,1.10806,-0.19332],[-0.33943,1.10251,-0.1947],[-0.33557,1.09756,-0.19593],[-0.33201,1.09275,-0.19694],[-0.32891,1.08869,-0.19768],[-0.32617,1.08515,-0.19849],[-0.32377,1.08205,-0.19925],[-0.3218,1.07946,-0.19986],[-0.32032,1.07746,-0.20029],[-0.31937,1.07617,-0.20058]],"box":[[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.00014,1e-05,-6e-05],[0.00064,4e-05,-0.00022],[0.00111,7e-05,-0.00035],[0.00198,0.00011,-0.00056],[0.00337,0.00016,-0.00081],[0.00518,0.0002,-0.00105],[0.00728,0.00023,-0.00127],[0.00943,0.00026,-0.00146],[0.01142,0.00029,-0.00163],[0.01308,0.00031,-0.00177],[0.01449,0.00033,-0.00192],[0.01579,0.00036,-0.0021],[0.01713,0.00039,-0.00233],[0.0186,0.00042,-0.00257],[0.02029,0.00045,-0.00283],[0.02212,0.00049,-0.00312],[0.02405,0.00052,-0.00344],[0.02592,0.00054,-0.00373],[0.02765,0.00057,-0.00397],[0.02923,0.00059,-0.0042],[0.03077,0.00062,-0.00447],[0.03239,0.00065,-0.00483],[0.03412,0.00068,-0.00529],[0.03607,0.00072,-0.00589],[0.03816,0.00075,-0.00648],[0.04029,0.00078,-0.00708],[0.04233,0.0008,-0.00757],[0.04422,0.00083,-0.00808],[0.0459,0.00085,-0.00858],[0.0474,0.00088,-0.00916],[0.0489,0.0009,-0.01027],[0.05048,0.00094,-0.01214],[0.05216,0.00097,-0.01468],[0.054,0.001,-0.01774],[0.05595,0.00103,-0.02104],[0.05795,0.00106,-0.02428],[0.05983,0.00108,-0.0267],[0.06166,0.00111,-0.02893],[0.06336,0.00113,-0.03077],[0.065,0.00116,-0.03286],[0.06659,0.00118,-0.03524],[0.0682,0.00121,-0.03822],[0.06988,0.00123,-0.04206],[0.07151,0.00126,-0.04588],[0.07312,0.00128,-0.04992],[0.07466,0.00131,-0.05392],[0.07611,0.00133,-0.05784],[0.07754,0.00136,-0.06224],[0.07894,0.00138,-0.06713],[0.08036,0.0014,-0.07304],[0.08179,0.00143,-0.07975],[0.0832,0.00145,-0.0872],[0.08459,0.00147,-0.0953],[0.08588,0.00149,-0.10352],[0.0871,0.00151,-0.11211],[0.08823,0.00153,-0.12081],[0.08929,0.00155,-0.12982],[0.09028,0.00157,-0.13923],[0.09125,0.00159,-0.14931],[0.09216,0.00161,-0.15984],[0.093,0.00163,-0.17079],[0.09379,0.00164,-0.1822],[0.09452,0.00166,-0.19406],[0.09521,0.00167,-0.20648],[0.09583,0.00169,-0.21904],[0.09641,0.0017,-0.23202],[0.09697,0.00171,-0.24533],[0.09748,0.00172,-0.25876],[0.09793,0.00173,-0.27222],[0.0983,0.00174,-0.28541],[0.09862,0.00175,-0.29835],[0.09888,0.00175,-0.31126],[0.0991,0.00176,-0.32404],[0.09927,0.00176,-0.33667],[0.0994,0.00177,-0.34889],[0.09949,0.00177,-0.36032],[0.09956,0.00177,-0.37043],[0.09963,0.00177,-0.37979],[0.09969,0.00177,-0.38808],[0.09974,0.00177,-0.39514],[0.09979,0.00176,-0.40078],[0.09984,0.00176,-0.40475],[0.09988,0.00176,-0.40686]],"tip":[[0.23533,0.04757],[0.23533,0.04757],[0.23533,0.04757],[0.23534,0.04757],[0.23538,0.04758],[0.23553,0.04761],[0.23582,0.04767],[0.23623,0.04778],[0.23669,0.04793],[0.23717,0.04812],[0.23764,0.04834],[0.23811,0.04859],[0.23863,0.04884],[0.23926,0.0491],[0.24,0.04935],[0.24083,0.04961],[0.24172,0.04988],[0.24262,0.05016],[0.24353,0.05047],[0.24446,0.05081],[0.24542,0.05119],[0.24645,0.05159],[0.24755,0.05202],[0.24869,0.05246],[0.24987,0.05291],[0.25108,0.05336],[0.25231,0.05381],[0.25341,0.0543],[0.25369,0.05493],[0.25414,0.05559],[0.25492,0.0563],[0.25621,0.05703],[0.25798,0.0577],[0.26009,0.05827],[0.26224,0.05874],[0.26422,0.05911],[0.26596,0.05941],[0.26741,0.05972],[0.26868,0.0601],[0.26999,0.06058],[0.27144,0.06121],[0.27312,0.06194],[0.27499,0.06276],[0.2769,0.06361],[0.27875,0.06444],[0.28049,0.0652],[0.2821,0.06586],[0.28365,0.06644],[0.28524,0.06693],[0.287,0.06738],[0.28893,0.06782],[0.29101,0.06829],[0.29315,0.06882],[0.29522,0.06944],[0.29711,0.07015],[0.29881,0.07094],[0.30038,0.07177],[0.30188,0.07261],[0.30345,0.07341],[0.30518,0.07415],[0.30708,0.0748],[0.30908,0.07539],[0.31109,0.07592],[0.31309,0.07643],[0.31493,0.07696],[0.31668,0.07752],[0.31836,0.07812],[0.32003,0.07875],[0.32175,0.07942],[0.32346,0.08012],[0.32521,0.08083],[0.32692,0.08155],[0.32857,0.08226],[0.33016,0.08296],[0.3317,0.08362],[0.33325,0.08423],[0.3348,0.0848],[0.33642,0.08532],[0.33804,0.08582],[0.33963,0.08631],[0.34115,0.08681],[0.34259,0.08735],[0.34396,0.08792],[0.34528,0.08851],[0.34657,0.08912],[0.34784,0.08975],[0.34907,0.09037],[0.35027,0.09098],[0.35142,0.09156],[0.35253,0.09212],[0.35359,0.09264],[0.35465,0.09312],[0.35565,0.0936],[0.35659,0.09409],[0.3575,0.09457],[0.35836,0.09504],[0.35919,0.09548],[0.35996,0.09591],[0.36063,0.09634],[0.36124,0.09675],[0.36183,0.09715],[0.36236,0.09753],[0.36284,0.09788],[0.3633,0.09816],[0.36368,0.09844],[0.36401,0.09869],[0.3643,0.0989],[0.36455,0.09907],[0.36474,0.09919],[0.36487,0.09927]]}},"novel":{"plant":{"t":[0.0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2,0.22,0.24,0.26,0.28,0.3,0.32,0.34,0.36,0.38,0.4,0.42,0.44,0.46,0.48,0.5,0.52,0.54,0.56,0.58,0.6,0.62,0.64,0.66,0.68,0.7,0.72,0.74,0.76,0.78,0.8,0.82,0.84,0.86,0.88,0.9,0.92,0.94,0.96,0.98,1.0,1.02,1.04,1.06,1.08,1.1,1.12,1.14,1.16,1.18,1.2,1.22,1.24,1.26,1.28,1.3,1.32,1.34,1.36,1.38,1.4,1.42,1.44,1.46,1.48,1.5,1.52,1.54,1.56,1.58,1.6,1.62,1.64,1.66,1.68,1.7,1.72,1.74,1.76,1.78,1.8,1.82,1.84,1.86,1.88,1.9,1.92,1.94,1.96,1.98,2.0,2.02,2.04,2.06,2.08,2.1,2.12,2.14,2.16,2.18],"q":[[-0.5294,1.18194,-0.25641],[-0.5294,1.18194,-0.25641],[-0.5294,1.18194,-0.25641],[-0.52941,1.18197,-0.25641],[-0.52949,1.18225,-0.2564],[-0.52986,1.18322,-0.25638],[-0.53055,1.18495,-0.2562],[-0.5314,1.18707,-0.2556],[-0.53226,1.18933,-0.25489],[-0.53307,1.19171,-0.25437],[-0.53391,1.19433,-0.25387],[-0.53489,1.19735,-0.25316],[-0.53605,1.20082,-0.25225],[-0.53732,1.20466,-0.25129],[-0.53865,1.20868,-0.25031],[-0.54001,1.21285,-0.2493],[-0.54144,1.21719,-0.24824],[-0.54298,1.22179,-0.24711],[-0.54463,1.22666,-0.24589],[-0.54637,1.23177,-0.2446],[-0.54816,1.23704,-0.24326],[-0.54997,1.24246,-0.24189],[-0.5518,1.24804,-0.24047],[-0.55366,1.2538,-0.23899],[-0.55555,1.25976,-0.23744],[-0.55746,1.26589,-0.23582],[-0.55936,1.27217,-0.23416],[-0.56126,1.27855,-0.23245],[-0.56315,1.28505,-0.23071],[-0.56505,1.29165,-0.22892],[-0.56697,1.29836,-0.22708],[-0.56891,1.30517,-0.22521],[-0.57085,1.31206,-0.22329],[-0.57278,1.31898,-0.22136],[-0.5747,1.32593,-0.21941],[-0.57573,1.32934,-0.21938],[-0.5765,1.33085,-0.2195],[-0.57862,1.33452,-0.21929],[-0.58264,1.3413,-0.21808],[-0.58799,1.35002,-0.21543],[-0.59343,1.35885,-0.2124],[-0.59774,1.36624,-0.21023],[-0.60029,1.37172,-0.20896],[-0.60142,1.37601,-0.20818],[-0.60211,1.38022,-0.20753],[-0.60335,1.38581,-0.20655],[-0.60547,1.39303,-0.20453],[-0.60805,1.4014,-0.20143],[-0.61028,1.41019,-0.19812],[-0.61145,1.41879,-0.19517],[-0.61141,1.42681,-0.19251],[-0.61055,1.43392,-0.19038],[-0.60964,1.44084,-0.18828],[-0.60932,1.44793,-0.18616],[-0.60981,1.45533,-0.18367],[-0.61102,1.46266,-0.1811],[-0.61269,1.46986,-0.17846],[-0.61433,1.47623,-0.17659],[-0.61578,1.48208,-0.17465],[-0.61695,1.48753,-0.17289],[-0.61789,1.49243,-0.17186],[-0.61883,1.49768,-0.17024],[-0.61983,1.50319,-0.16836],[-0.6208,1.50914,-0.16634],[-0.62152,1.51544,-0.16421],[-0.62181,1.52187,-0.16192],[-0.62161,1.52835,-0.15962],[-0.621,1.53475,-0.15729],[-0.6201,1.54117,-0.15483],[-0.61908,1.54745,-0.15252],[-0.61812,1.55338,-0.15055],[-0.61743,1.55924,-0.14829],[-0.61703,1.56494,-0.14614],[-0.61682,1.5702,-0.14441],[-0.61675,1.5751,-0.1426],[-0.61669,1.57961,-0.14098],[-0.61665,1.58384,-0.13953],[-0.61658,1.58785,-0.13826],[-0.61652,1.59188,-0.13676],[-0.61637,1.59602,-0.13529],[-0.61605,1.60023,-0.13377],[-0.61547,1.60457,-0.13213],[-0.61457,1.60914,-0.13029],[-0.61333,1.61379,-0.12846],[-0.61183,1.6186,-0.12648],[-0.61012,1.62326,-0.1247],[-0.6084,1.62789,-0.12282],[-0.60681,1.63234,-0.12101],[-0.60544,1.63652,-0.1193],[-0.60438,1.64045,-0.1177],[-0.60361,1.64414,-0.11617],[-0.60303,1.64745,-0.11483],[-0.60254,1.65031,-0.1137],[-0.60205,1.65259,-0.11295],[-0.6016,1.65451,-0.11226],[-0.60117,1.65604,-0.11178],[-0.6008,1.65718,-0.11154],[-0.60057,1.6583,-0.11126],[-0.60048,1.65941,-0.11102],[-0.60047,1.66059,-0.11067],[-0.60043,1.66177,-0.1103],[-0.60029,1.66316,-0.1097],[-0.59994,1.66477,-0.10899],[-0.59934,1.66647,-0.10832],[-0.59853,1.66833,-0.10746],[-0.59752,1.67002,-0.10677],[-0.59649,1.67169,-0.10596],[-0.59553,1.67305,-0.10534],[-0.59483,1.67417,-0.10482],[-0.59444,1.6749,-0.10452]],"box":[[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[-0.00017,0.0,-1e-05],[-0.00048,-0.0,-0.00011],[-0.00106,-1e-05,-0.00025],[-0.00201,-2e-05,-0.00035],[-0.00323,-1e-05,-0.00038],[-0.00448,0.0,-0.00034],[-0.00554,2e-05,-0.00024],[-0.00633,4e-05,-0.00012],[-0.00696,7e-05,2e-05],[-0.00764,0.0001,0.0002],[-0.00851,0.00013,0.00041],[-0.00964,0.00017,0.00064],[-0.01103,0.0002,0.00088],[-0.01255,0.00024,0.00111],[-0.01406,0.00026,0.00133],[-0.01548,0.00029,0.00155],[-0.01689,0.00032,0.0019],[-0.01826,0.00035,0.00242],[-0.01964,0.00038,0.0032],[-0.021,0.0004,0.00414],[-0.02233,0.00043,0.00507],[-0.02357,0.00046,0.0058],[-0.02475,0.00048,0.00645],[-0.02578,0.00051,0.00688],[-0.0267,0.00053,0.00748],[-0.02765,0.00056,0.0087],[-0.02856,0.00059,0.01048],[-0.02955,0.00062,0.01301],[-0.03063,0.00065,0.01645],[-0.03179,0.00068,0.02064],[-0.03301,0.00071,0.02557],[-0.03424,0.00074,0.03121],[-0.03547,0.00077,0.03758],[-0.03666,0.00079,0.04458],[-0.03781,0.00081,0.05246],[-0.03893,0.00084,0.06157],[-0.03996,0.00086,0.07144],[-0.04088,0.00088,0.08217],[-0.0417,0.0009,0.09396],[-0.04239,0.00092,0.10643],[-0.04295,0.00094,0.11976],[-0.0434,0.00096,0.13408],[-0.0438,0.00098,0.14971],[-0.04414,0.001,0.16662],[-0.04447,0.00101,0.18499],[-0.04479,0.00103,0.20493],[-0.0451,0.00105,0.22621],[-0.04538,0.00106,0.24846],[-0.04565,0.00107,0.27159],[-0.04588,0.00108,0.29504],[-0.0461,0.00109,0.31885],[-0.04626,0.00109,0.34227],[-0.04637,0.0011,0.36508],[-0.04642,0.0011,0.38688],[-0.04646,0.00111,0.40712],[-0.04649,0.00111,0.42518],[-0.04652,0.00111,0.44079],[-0.04655,0.00111,0.45363],[-0.04658,0.00111,0.46392],[-0.04661,0.00111,0.47154],[-0.04664,0.00111,0.47713],[-0.04668,0.00111,0.48151],[-0.04672,0.00111,0.48498],[-0.04676,0.00111,0.48836],[-0.04681,0.00111,0.49206],[-0.04685,0.00111,0.49655],[-0.0469,0.0011,0.5015],[-0.04695,0.0011,0.50681],[-0.04699,0.0011,0.5125],[-0.04703,0.0011,0.51798],[-0.04708,0.0011,0.5234],[-0.04712,0.00109,0.52794],[-0.04716,0.00109,0.53175],[-0.04719,0.00109,0.53446],[-0.04722,0.00109,0.53621]],"tip":[[0.3668,0.03876],[0.3668,0.03876],[0.3668,0.03876],[0.36679,0.03877],[0.36677,0.03879],[0.36667,0.03886],[0.36647,0.03898],[0.36621,0.03917],[0.36592,0.03939],[0.36562,0.03964],[0.36529,0.03993],[0.36491,0.04026],[0.36447,0.04065],[0.36398,0.04107],[0.36346,0.04152],[0.36292,0.04198],[0.36235,0.04247],[0.36175,0.04297],[0.36111,0.04349],[0.36043,0.04403],[0.35973,0.04459],[0.359,0.04518],[0.35825,0.04579],[0.35746,0.04643],[0.35664,0.04711],[0.35578,0.04782],[0.3549,0.04856],[0.35399,0.04932],[0.35306,0.05011],[0.35211,0.05092],[0.35113,0.05175],[0.35012,0.05259],[0.3491,0.05343],[0.34806,0.05429],[0.34701,0.05516],[0.34646,0.05555],[0.34628,0.05558],[0.34586,0.05558],[0.34501,0.05561],[0.34384,0.05568],[0.3426,0.05578],[0.34154,0.05592],[0.34073,0.05619],[0.34007,0.05667],[0.33943,0.05727],[0.33857,0.058],[0.33745,0.05881],[0.3361,0.05976],[0.3346,0.06093],[0.3331,0.06234],[0.3316,0.06403],[0.33021,0.0658],[0.32886,0.06752],[0.32747,0.06912],[0.3261,0.07048],[0.32474,0.07162],[0.32342,0.07258],[0.32227,0.07333],[0.32121,0.07403],[0.32021,0.07474],[0.31933,0.07536],[0.31834,0.0761],[0.31732,0.07685],[0.3162,0.07769],[0.31496,0.07868],[0.31365,0.07983],[0.31227,0.08113],[0.31088,0.08253],[0.30943,0.08403],[0.30799,0.08553],[0.30664,0.08693],[0.30528,0.08824],[0.30399,0.08943],[0.30281,0.09045],[0.3017,0.09137],[0.30069,0.0922],[0.29975,0.09296],[0.29885,0.09368],[0.29794,0.0944],[0.29699,0.09517],[0.29602,0.09598],[0.29496,0.0969],[0.29383,0.09794],[0.29264,0.09909],[0.29136,0.10034],[0.29009,0.10162],[0.28882,0.1029],[0.28759,0.1041],[0.28644,0.10519],[0.28536,0.10615],[0.28439,0.10698],[0.28351,0.10768],[0.28275,0.10828],[0.28215,0.10878],[0.28163,0.10921],[0.28121,0.10957],[0.28089,0.10985],[0.28062,0.11008],[0.28034,0.11027],[0.28007,0.11045],[0.27979,0.11063],[0.27943,0.11088],[0.279,0.11122],[0.27852,0.11164],[0.27797,0.11215],[0.27743,0.11269],[0.27689,0.11324],[0.27644,0.11371],[0.27606,0.11409],[0.27582,0.11433]]},"twin_stiff":{"t":[0.0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2,0.22,0.24,0.26,0.28,0.3,0.32,0.34,0.36,0.38,0.4,0.42,0.44,0.46,0.48,0.5,0.52,0.54,0.56,0.58,0.6,0.62,0.64,0.66,0.68,0.7,0.72,0.74,0.76,0.78,0.8,0.82,0.84,0.86,0.88,0.9,0.92,0.94,0.96,0.98,1.0,1.02,1.04,1.06,1.08,1.1,1.12,1.14,1.16,1.18,1.2,1.22,1.24,1.26,1.28,1.3,1.32,1.34,1.36,1.38,1.4,1.42,1.44,1.46,1.48,1.5,1.52,1.54,1.56,1.58,1.6,1.62,1.64,1.66,1.68,1.7,1.72,1.74,1.76,1.78,1.8,1.82,1.84,1.86,1.88,1.9,1.92,1.94,1.96,1.98,2.0,2.02,2.04,2.06,2.08,2.1,2.12,2.14,2.16,2.18],"q":[[-0.5294,1.18194,-0.25641],[-0.5294,1.18194,-0.25641],[-0.5294,1.18194,-0.25641],[-0.52941,1.18198,-0.25641],[-0.52951,1.1823,-0.2564],[-0.52989,1.18339,-0.25637],[-0.53057,1.18519,-0.25606],[-0.53137,1.18729,-0.25536],[-0.53213,1.1895,-0.25477],[-0.53288,1.19186,-0.25434],[-0.53372,1.19451,-0.25376],[-0.53475,1.19762,-0.25296],[-0.53594,1.20117,-0.25207],[-0.5372,1.20495,-0.25115],[-0.53849,1.20885,-0.25019],[-0.53985,1.21296,-0.24921],[-0.54132,1.21734,-0.24814],[-0.54291,1.22202,-0.24697],[-0.54458,1.22693,-0.24573],[-0.5463,1.23201,-0.24446],[-0.54805,1.23725,-0.24314],[-0.54983,1.24266,-0.24177],[-0.55167,1.24829,-0.24033],[-0.55354,1.25412,-0.23882],[-0.55542,1.2601,-0.23725],[-0.55731,1.26622,-0.23565],[-0.55919,1.27246,-0.234],[-0.56108,1.27883,-0.2323],[-0.56299,1.28533,-0.23055],[-0.56492,1.29194,-0.22875],[-0.56685,1.29865,-0.22692],[-0.56879,1.30545,-0.22505],[-0.57073,1.31231,-0.22315],[-0.57266,1.31922,-0.22122],[-0.57455,1.32609,-0.21934],[-0.57543,1.32897,-0.21951],[-0.57634,1.33068,-0.21964],[-0.57899,1.3353,-0.21932],[-0.58378,1.34326,-0.21748],[-0.58971,1.35273,-0.21401],[-0.5952,1.36161,-0.21085],[-0.59915,1.36844,-0.20921],[-0.60145,1.37307,-0.20849],[-0.60292,1.37687,-0.20798],[-0.60466,1.38149,-0.20731],[-0.60726,1.38792,-0.20574],[-0.61044,1.39582,-0.203],[-0.61335,1.40466,-0.1996],[-0.61496,1.4132,-0.19675],[-0.615,1.42109,-0.19413],[-0.61382,1.42794,-0.19202],[-0.61233,1.43466,-0.19003],[-0.61135,1.44186,-0.18796],[-0.61126,1.44947,-0.18547],[-0.61197,1.4572,-0.1826],[-0.61319,1.46487,-0.17982],[-0.61453,1.47182,-0.17758],[-0.61579,1.47784,-0.17575],[-0.61703,1.48331,-0.17409],[-0.61839,1.48862,-0.1726],[-0.61995,1.49408,-0.17096],[-0.62164,1.49984,-0.16903],[-0.62317,1.50578,-0.16715],[-0.62427,1.51202,-0.1649],[-0.6247,1.51833,-0.16264],[-0.62448,1.52466,-0.16043],[-0.62368,1.53097,-0.15817],[-0.62246,1.53717,-0.15601],[-0.62108,1.54346,-0.15367],[-0.61975,1.54988,-0.15122],[-0.61855,1.55596,-0.14911],[-0.61758,1.56168,-0.14708],[-0.61696,1.56723,-0.14489],[-0.61662,1.57239,-0.14311],[-0.61646,1.57709,-0.14147],[-0.61629,1.58157,-0.13966],[-0.61606,1.58624,-0.13801],[-0.6157,1.59069,-0.13667],[-0.6153,1.59506,-0.135],[-0.61489,1.59957,-0.13318],[-0.61442,1.60441,-0.13138],[-0.61374,1.60938,-0.12935],[-0.61269,1.61444,-0.1272],[-0.61127,1.61985,-0.12491],[-0.60945,1.62545,-0.12257],[-0.60728,1.63093,-0.12024],[-0.60488,1.63594,-0.11817],[-0.60254,1.64046,-0.11639],[-0.6005,1.64406,-0.11506],[-0.59897,1.64636,-0.11428],[-0.5983,1.64765,-0.11393],[-0.59833,1.64816,-0.1139],[-0.5986,1.64867,-0.11391],[-0.59901,1.64954,-0.11392],[-0.59957,1.651,-0.1139],[-0.60029,1.65306,-0.11345],[-0.60111,1.65551,-0.11235],[-0.60188,1.65844,-0.11096],[-0.60218,1.6617,-0.10951],[-0.60182,1.66521,-0.1079],[-0.60065,1.66877,-0.1062],[-0.59863,1.6719,-0.1047],[-0.59604,1.67439,-0.10366],[-0.59347,1.6765,-0.10284],[-0.59143,1.67834,-0.10208],[-0.59016,1.67952,-0.10162],[-0.58979,1.67999,-0.10147],[-0.58985,1.68003,-0.10142],[-0.59014,1.67997,-0.1014],[-0.59045,1.67994,-0.10139]],"box":[[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[-1e-05,0.0,0.0],[-0.00017,0.0,-2e-05],[-0.00049,-0.0,-0.00014],[-0.00117,-1e-05,-0.00027],[-0.00229,-1e-05,-0.00036],[-0.00364,-1e-05,-0.00037],[-0.0049,1e-05,-0.00034],[-0.00585,3e-05,-0.00024],[-0.00649,5e-05,-0.00012],[-0.00702,8e-05,4e-05],[-0.00768,0.00012,0.00023],[-0.00864,0.00016,0.00045],[-0.00992,0.0002,0.00068],[-0.01135,0.00024,0.00089],[-0.01284,0.00027,0.00111],[-0.01423,0.0003,0.00134],[-0.01559,0.00034,0.00179],[-0.01694,0.00037,0.0026],[-0.01832,0.0004,0.00394],[-0.01976,0.00044,0.00591],[-0.02121,0.00047,0.00828],[-0.02255,0.0005,0.01071],[-0.02377,0.00053,0.01322],[-0.02485,0.00056,0.01584],[-0.0258,0.00059,0.01863],[-0.02668,0.00062,0.02197],[-0.02756,0.00065,0.02631],[-0.02849,0.00068,0.03196],[-0.0295,0.00071,0.0392],[-0.03053,0.00074,0.04774],[-0.03159,0.00077,0.05766],[-0.03266,0.0008,0.06906],[-0.03371,0.00083,0.08192],[-0.03477,0.00085,0.09648],[-0.03578,0.00088,0.11256],[-0.03669,0.0009,0.13008],[-0.03755,0.00092,0.14944],[-0.0383,0.00094,0.17038],[-0.03888,0.00096,0.19251],[-0.03934,0.00098,0.21608],[-0.03969,0.00099,0.24102],[-0.03994,0.00099,0.26681],[-0.04016,0.001,0.29325],[-0.04035,0.001,0.32097],[-0.04049,0.00101,0.34998],[-0.04059,0.00101,0.38023],[-0.04068,0.00102,0.41135],[-0.04075,0.00102,0.44296],[-0.04082,0.00102,0.47435],[-0.04087,0.00102,0.50425],[-0.0409,0.00102,0.53159],[-0.04093,0.00101,0.55542],[-0.04095,0.00101,0.57497],[-0.04096,0.00101,0.58926],[-0.04097,0.00101,0.59837],[-0.04099,0.00101,0.60331],[-0.04101,0.001,0.60531],[-0.04105,0.00099,0.60608],[-0.0411,0.00096,0.6066],[-0.04116,0.00093,0.60826],[-0.04123,0.0009,0.61222],[-0.04132,0.00088,0.61904],[-0.0414,0.00086,0.62879],[-0.04146,0.00085,0.64054],[-0.04151,0.00084,0.65301],[-0.04155,0.00083,0.66439],[-0.04157,0.00082,0.67288],[-0.04159,0.00082,0.6773],[-0.0416,0.00082,0.67842],[-0.0416,0.00082,0.67862],[-0.0416,0.00082,0.67864],[-0.0416,0.00081,0.67868],[-0.04161,0.00081,0.67871],[-0.04161,0.0008,0.67875],[-0.04162,0.00078,0.67881],[-0.04163,0.00076,0.67888]],"tip":[[0.3668,0.03876],[0.3668,0.03876],[0.3668,0.03876],[0.36679,0.03877],[0.36676,0.0388],[0.36665,0.03888],[0.36643,0.03903],[0.36617,0.03925],[0.36589,0.03949],[0.36559,0.03974],[0.36526,0.04004],[0.36487,0.04039],[0.36441,0.04078],[0.36393,0.04119],[0.36342,0.04163],[0.36289,0.04208],[0.36232,0.04255],[0.36171,0.04305],[0.36106,0.04358],[0.36039,0.04412],[0.35969,0.04469],[0.35896,0.04528],[0.3582,0.0459],[0.3574,0.04656],[0.35658,0.04724],[0.35572,0.04796],[0.35484,0.04869],[0.35394,0.04946],[0.35301,0.05024],[0.35205,0.05104],[0.35107,0.05186],[0.35007,0.0527],[0.34905,0.05354],[0.34801,0.0544],[0.34696,0.05526],[0.3465,0.05557],[0.34631,0.05559],[0.34578,0.0556],[0.34476,0.05565],[0.34345,0.05574],[0.34218,0.05584],[0.34121,0.05595],[0.34056,0.05609],[0.34,0.05637],[0.33935,0.05671],[0.33843,0.05717],[0.33722,0.0578],[0.33578,0.05875],[0.3343,0.06003],[0.33286,0.06166],[0.33151,0.06349],[0.33019,0.06536],[0.32879,0.06717],[0.32731,0.06881],[0.32586,0.0702],[0.32442,0.07141],[0.32314,0.07239],[0.32204,0.0732],[0.32104,0.0739],[0.32009,0.07451],[0.31913,0.07508],[0.31811,0.07566],[0.31702,0.07634],[0.31585,0.07718],[0.31457,0.07827],[0.31325,0.07955],[0.31186,0.081],[0.31046,0.08256],[0.30901,0.08416],[0.3075,0.0858],[0.30609,0.08729],[0.30473,0.08867],[0.30345,0.08989],[0.30226,0.09094],[0.30121,0.09184],[0.30019,0.09269],[0.29911,0.09359],[0.2981,0.09446],[0.29707,0.09535],[0.29601,0.09625],[0.29485,0.09723],[0.29364,0.09828],[0.29235,0.09945],[0.29093,0.10078],[0.28943,0.10224],[0.28789,0.10378],[0.28645,0.10529],[0.28509,0.10671],[0.28398,0.10789],[0.28322,0.10873],[0.28282,0.10915],[0.2827,0.10923],[0.28263,0.10922],[0.2825,0.10922],[0.28226,0.10925],[0.28188,0.10934],[0.28138,0.1095],[0.28074,0.10974],[0.27998,0.11015],[0.27908,0.11078],[0.27807,0.11164],[0.27703,0.11268],[0.27611,0.11377],[0.27528,0.11481],[0.27457,0.11567],[0.27409,0.11622],[0.27392,0.11642],[0.2739,0.11642],[0.27395,0.11634],[0.27399,0.11625]]},"twin_flat":{"t":[0.0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2,0.22,0.24,0.26,0.28,0.3,0.32,0.34,0.36,0.38,0.4,0.42,0.44,0.46,0.48,0.5,0.52,0.54,0.56,0.58,0.6,0.62,0.64,0.66,0.68,0.7,0.72,0.74,0.76,0.78,0.8,0.82,0.84,0.86,0.88,0.9,0.92,0.94,0.96,0.98,1.0,1.02,1.04,1.06,1.08,1.1,1.12,1.14,1.16,1.18,1.2,1.22,1.24,1.26,1.28,1.3,1.32,1.34,1.36,1.38,1.4,1.42,1.44,1.46,1.48,1.5,1.52,1.54,1.56,1.58,1.6,1.62,1.64,1.66,1.68,1.7,1.72,1.74,1.76,1.78,1.8,1.82,1.84,1.86,1.88,1.9,1.92,1.94,1.96,1.98,2.0,2.02,2.04,2.06,2.08,2.1,2.12,2.14,2.16,2.18],"q":[[-0.5294,1.18194,-0.25641],[-0.5294,1.18194,-0.25641],[-0.5294,1.18194,-0.25641],[-0.52941,1.18197,-0.25641],[-0.52949,1.18225,-0.2564],[-0.52986,1.18322,-0.25638],[-0.53055,1.18495,-0.2562],[-0.5314,1.18707,-0.2556],[-0.53226,1.18933,-0.25489],[-0.53307,1.19171,-0.25437],[-0.53391,1.19433,-0.25387],[-0.53489,1.19735,-0.25316],[-0.53605,1.20082,-0.25225],[-0.53732,1.20466,-0.25129],[-0.53865,1.20868,-0.25031],[-0.54001,1.21285,-0.2493],[-0.54144,1.21719,-0.24824],[-0.54298,1.22179,-0.24711],[-0.54463,1.22666,-0.24589],[-0.54637,1.23177,-0.2446],[-0.54816,1.23704,-0.24326],[-0.54997,1.24246,-0.24189],[-0.5518,1.24804,-0.24047],[-0.55366,1.2538,-0.23899],[-0.55555,1.25976,-0.23744],[-0.55746,1.26589,-0.23582],[-0.55936,1.27217,-0.23416],[-0.56126,1.27855,-0.23245],[-0.56315,1.28505,-0.23071],[-0.56505,1.29165,-0.22892],[-0.56697,1.29836,-0.22708],[-0.56891,1.30517,-0.22521],[-0.57085,1.31206,-0.22329],[-0.57278,1.31898,-0.22136],[-0.5747,1.32593,-0.21941],[-0.57573,1.32934,-0.21938],[-0.5765,1.33085,-0.2195],[-0.57862,1.33452,-0.21929],[-0.58264,1.3413,-0.21808],[-0.58799,1.35002,-0.21543],[-0.59343,1.35885,-0.2124],[-0.59774,1.36624,-0.21023],[-0.60029,1.37172,-0.20896],[-0.60142,1.37601,-0.20818],[-0.60211,1.38022,-0.20753],[-0.60335,1.38581,-0.20655],[-0.60547,1.39303,-0.20453],[-0.60805,1.4014,-0.20143],[-0.61028,1.41019,-0.19812],[-0.61145,1.41879,-0.19517],[-0.61141,1.42681,-0.19251],[-0.61055,1.43392,-0.19038],[-0.60964,1.44084,-0.18828],[-0.60932,1.44793,-0.18616],[-0.60981,1.45533,-0.18367],[-0.61102,1.46266,-0.1811],[-0.61269,1.46986,-0.17846],[-0.61433,1.47623,-0.17659],[-0.61578,1.48208,-0.17465],[-0.61695,1.48753,-0.17289],[-0.61789,1.49243,-0.17186],[-0.61883,1.49768,-0.17024],[-0.61983,1.50319,-0.16836],[-0.6208,1.50914,-0.16634],[-0.62152,1.51544,-0.16421],[-0.62181,1.52187,-0.16192],[-0.62161,1.52835,-0.15962],[-0.621,1.53475,-0.15729],[-0.6201,1.54117,-0.15483],[-0.61908,1.54745,-0.15252],[-0.61812,1.55338,-0.15055],[-0.61743,1.55924,-0.14829],[-0.61703,1.56494,-0.14614],[-0.61682,1.5702,-0.14441],[-0.61675,1.5751,-0.1426],[-0.61669,1.57961,-0.14098],[-0.61665,1.58384,-0.13953],[-0.61658,1.58785,-0.13826],[-0.61652,1.59188,-0.13676],[-0.61637,1.59602,-0.13529],[-0.61605,1.60023,-0.13377],[-0.61547,1.60457,-0.13213],[-0.61457,1.60914,-0.13029],[-0.61333,1.61379,-0.12846],[-0.61183,1.6186,-0.12648],[-0.61012,1.62326,-0.1247],[-0.6084,1.62789,-0.12282],[-0.60681,1.63234,-0.12101],[-0.60544,1.63652,-0.1193],[-0.60438,1.64045,-0.1177],[-0.60361,1.64414,-0.11617],[-0.60303,1.64745,-0.11483],[-0.60254,1.65031,-0.1137],[-0.60205,1.65259,-0.11295],[-0.6016,1.65451,-0.11226],[-0.60117,1.65604,-0.11178],[-0.6008,1.65718,-0.11154],[-0.60057,1.6583,-0.11126],[-0.60048,1.65941,-0.11102],[-0.60047,1.66059,-0.11067],[-0.60043,1.66177,-0.1103],[-0.60029,1.66316,-0.1097],[-0.59994,1.66477,-0.10899],[-0.59934,1.66647,-0.10832],[-0.59853,1.66833,-0.10746],[-0.59752,1.67002,-0.10677],[-0.59649,1.67169,-0.10596],[-0.59553,1.67305,-0.10534],[-0.59483,1.67417,-0.10482],[-0.59444,1.6749,-0.10452]],"box":[[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[-0.00017,0.0,-1e-05],[-0.00048,-0.0,-0.00011],[-0.00106,-1e-05,-0.00025],[-0.00201,-2e-05,-0.00035],[-0.00323,-1e-05,-0.00038],[-0.00448,0.0,-0.00034],[-0.00554,2e-05,-0.00024],[-0.00633,4e-05,-0.00012],[-0.00696,7e-05,2e-05],[-0.00764,0.0001,0.0002],[-0.00851,0.00013,0.00041],[-0.00964,0.00017,0.00064],[-0.01103,0.0002,0.00088],[-0.01255,0.00024,0.00111],[-0.01406,0.00026,0.00133],[-0.01548,0.00029,0.00155],[-0.01689,0.00032,0.0019],[-0.01826,0.00035,0.00242],[-0.01964,0.00038,0.0032],[-0.021,0.0004,0.00414],[-0.02233,0.00043,0.00507],[-0.02357,0.00046,0.0058],[-0.02475,0.00048,0.00645],[-0.02578,0.00051,0.00688],[-0.0267,0.00053,0.00748],[-0.02765,0.00056,0.0087],[-0.02856,0.00059,0.01048],[-0.02955,0.00062,0.01301],[-0.03063,0.00065,0.01645],[-0.03179,0.00068,0.02064],[-0.03301,0.00071,0.02557],[-0.03424,0.00074,0.03121],[-0.03547,0.00077,0.03758],[-0.03666,0.00079,0.04458],[-0.03781,0.00081,0.05246],[-0.03893,0.00084,0.06157],[-0.03996,0.00086,0.07144],[-0.04088,0.00088,0.08217],[-0.0417,0.0009,0.09396],[-0.04239,0.00092,0.10643],[-0.04295,0.00094,0.11976],[-0.0434,0.00096,0.13408],[-0.0438,0.00098,0.14971],[-0.04414,0.001,0.16662],[-0.04447,0.00101,0.18499],[-0.04479,0.00103,0.20493],[-0.0451,0.00105,0.22621],[-0.04538,0.00106,0.24846],[-0.04565,0.00107,0.27159],[-0.04588,0.00108,0.29504],[-0.0461,0.00109,0.31885],[-0.04626,0.00109,0.34227],[-0.04637,0.0011,0.36508],[-0.04642,0.0011,0.38688],[-0.04646,0.00111,0.40712],[-0.04649,0.00111,0.42518],[-0.04652,0.00111,0.44079],[-0.04655,0.00111,0.45363],[-0.04658,0.00111,0.46392],[-0.04661,0.00111,0.47154],[-0.04664,0.00111,0.47713],[-0.04668,0.00111,0.48151],[-0.04672,0.00111,0.48498],[-0.04676,0.00111,0.48836],[-0.04681,0.00111,0.49206],[-0.04685,0.00111,0.49655],[-0.0469,0.0011,0.5015],[-0.04695,0.0011,0.50681],[-0.04699,0.0011,0.5125],[-0.04703,0.0011,0.51798],[-0.04708,0.0011,0.5234],[-0.04712,0.00109,0.52794],[-0.04716,0.00109,0.53175],[-0.04719,0.00109,0.53446],[-0.04722,0.00109,0.53621]],"tip":[[0.3668,0.03876],[0.3668,0.03876],[0.3668,0.03876],[0.36679,0.03877],[0.36677,0.03879],[0.36667,0.03886],[0.36647,0.03898],[0.36621,0.03917],[0.36592,0.03939],[0.36562,0.03964],[0.36529,0.03993],[0.36491,0.04026],[0.36447,0.04065],[0.36398,0.04107],[0.36346,0.04152],[0.36292,0.04198],[0.36235,0.04247],[0.36175,0.04297],[0.36111,0.04349],[0.36043,0.04403],[0.35973,0.04459],[0.359,0.04518],[0.35825,0.04579],[0.35746,0.04643],[0.35664,0.04711],[0.35578,0.04782],[0.3549,0.04856],[0.35399,0.04932],[0.35306,0.05011],[0.35211,0.05092],[0.35113,0.05175],[0.35012,0.05259],[0.3491,0.05343],[0.34806,0.05429],[0.34701,0.05516],[0.34646,0.05555],[0.34628,0.05558],[0.34586,0.05558],[0.34501,0.05561],[0.34384,0.05568],[0.3426,0.05578],[0.34154,0.05592],[0.34073,0.05619],[0.34007,0.05667],[0.33943,0.05727],[0.33857,0.058],[0.33745,0.05881],[0.3361,0.05976],[0.3346,0.06093],[0.3331,0.06234],[0.3316,0.06403],[0.33021,0.0658],[0.32886,0.06752],[0.32747,0.06912],[0.3261,0.07048],[0.32474,0.07162],[0.32342,0.07258],[0.32227,0.07333],[0.32121,0.07403],[0.32021,0.07474],[0.31933,0.07536],[0.31834,0.0761],[0.31732,0.07685],[0.3162,0.07769],[0.31496,0.07868],[0.31365,0.07983],[0.31227,0.08113],[0.31088,0.08253],[0.30943,0.08403],[0.30799,0.08553],[0.30664,0.08693],[0.30528,0.08824],[0.30399,0.08943],[0.30281,0.09045],[0.3017,0.09137],[0.30069,0.0922],[0.29975,0.09296],[0.29885,0.09368],[0.29794,0.0944],[0.29699,0.09517],[0.29602,0.09598],[0.29496,0.0969],[0.29383,0.09794],[0.29264,0.09909],[0.29136,0.10034],[0.29009,0.10162],[0.28882,0.1029],[0.28759,0.1041],[0.28644,0.10519],[0.28536,0.10615],[0.28439,0.10698],[0.28351,0.10768],[0.28275,0.10828],[0.28215,0.10878],[0.28163,0.10921],[0.28121,0.10957],[0.28089,0.10985],[0.28062,0.11008],[0.28034,0.11027],[0.28007,0.11045],[0.27979,0.11063],[0.27943,0.11088],[0.279,0.11122],[0.27852,0.11164],[0.27797,0.11215],[0.27743,0.11269],[0.27689,0.11324],[0.27644,0.11371],[0.27606,0.11409],[0.27582,0.11433]]}}},"bus_demo":{"t":[0.0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2,0.22,0.24,0.26,0.28,0.3,0.32,0.34,0.36,0.38,0.4,0.42,0.44,0.46,0.48,0.5,0.52,0.54,0.56,0.58,0.6,0.62,0.64,0.66,0.68,0.7,0.72,0.74,0.76,0.78,0.8,0.82,0.84,0.86,0.88,0.9,0.92,0.94,0.96,0.98,1.0,1.02,1.04,1.06,1.08,1.1,1.12,1.14,1.16,1.18,1.2,1.22,1.24,1.26,1.28,1.3,1.32,1.34,1.36,1.38,1.4,1.42,1.44,1.46,1.48,1.5,1.52,1.54,1.56,1.58,1.6,1.62,1.64,1.66,1.68,1.7,1.72,1.74,1.76,1.78,1.8,1.82,1.84,1.86,1.88,1.9,1.92,1.94,1.96,1.98,2.0,2.02,2.04,2.06,2.08,2.1,2.12,2.14,2.16,2.18],"cmd":[1.95344,1.95325,1.95276,1.95191,1.95076,1.9493,1.94749,1.9454,1.94301,1.94032,1.93734,1.93405,1.9305,1.92667,1.92257,1.91821,1.91358,1.9087,1.90357,1.89818,1.89255,1.88669,1.88058,1.87425,1.86766,1.86088,1.85388,1.84666,1.83923,1.8316,1.82377,1.81573,1.80751,1.79909,1.79049,1.78171,1.77275,1.76362,1.75431,1.74484,1.73522,1.72543,1.71549,1.7054,1.69517,1.6848,1.67429,1.66365,1.65288,1.64199,1.63098,1.61986,1.60863,1.5973,1.58587,1.57434,1.56273,1.55103,1.53926,1.52742,1.51551,1.50354,1.49151,1.47944,1.46733,1.45519,1.44302,1.43084,1.41864,1.40645,1.39425,1.38208,1.36993,1.35781,1.34574,1.33372,1.32177,1.3099,1.29812,1.28644,1.27487,1.26344,1.25214,1.24101,1.23005,1.21928,1.20871,1.19841,1.18831,1.17847,1.1689,1.15964,1.15069,1.14208,1.13383,1.12596,1.11849,1.11145,1.10486,1.09873,1.09314,1.08801,1.08341,1.07936,1.07589,1.07305,1.07077,1.06911,1.06814,1.06779],"eff":[1.95344,1.95344,1.95325,1.95276,1.95276,1.95076,1.9493,1.94749,1.9454,1.94301,1.94032,1.93734,1.93405,1.9305,1.92667,1.92257,1.91821,1.91358,1.9087,1.90357,1.90357,1.89255,1.88669,1.88058,1.87425,1.86766,1.86088,1.85388,1.84666,1.83923,1.8316,1.82377,1.81573,1.80751,1.79909,1.79049,1.78171,1.77275,1.76362,1.75431,1.74484,1.73522,1.72543,1.71549,1.7054,1.69517,1.6848,1.67429,1.66365,1.65288,1.64199,1.63098,1.61986,1.60863,1.5973,1.58587,1.57434,1.56273,1.55103,1.55103,1.52742,1.51551,1.50354,1.49151,1.47944,1.46733,1.45519,1.44302,1.43084,1.41864,1.40645,1.39425,1.38208,1.36993,1.35781,1.34574,1.33372,1.32177,1.3099,1.29812,1.28644,1.27487,1.26344,1.25214,1.24101,1.23005,1.21928,1.20871,1.19841,1.18831,1.17847,1.1689,1.15964,1.15069,1.14208,1.13383,1.12596,1.11849,1.11145,1.10486,1.09873,1.09314,1.08801,1.08341,1.07936,1.07589,1.07305,1.07077,1.06911,1.06814],"q_obs":[1.952758,1.952758,1.952758,1.952758,1.952758,1.952758,1.951224,1.94969,1.946622,1.943554,1.940486,1.937418,1.93435,1.932816,1.929748,1.925146,1.920544,1.915942,1.91134,1.906738,1.900602,1.897534,1.892932,1.886796,1.877592,1.869923,1.863787,1.859185,1.857651,1.854583,1.849981,1.842311,1.833107,1.822369,1.810097,1.797825,1.788622,1.779418,1.773282,1.767146,1.759476,1.751806,1.739534,1.727262,1.714991,1.704253,1.693515,1.685845,1.678175,1.668971,1.658233,1.642893,1.627554,1.613748,1.60301,1.59534,1.58767,1.578466,1.569262,1.555457,1.543185,1.529379,1.514039,1.500233,1.486427,1.474156,1.464952,1.457282,1.449612,1.43734,1.422,1.40666,1.389787,1.375981,1.363709,1.354505,1.345301,1.336097,1.325359,1.313088,1.299282,1.285476,1.270136,1.259398,1.250194,1.24099,1.231787,1.222583,1.213379,1.201107,1.188835,1.176563,1.165825,1.159689,1.153554,1.145884,1.139748,1.130544,1.12134,1.11367,1.107534,1.102932,1.099864,1.096796,1.09066,1.086058,1.081456,1.078388,1.075321,1.073787],"q_true":[1.95344,1.95344,1.953436,1.953378,1.953123,1.9527,1.951391,1.949178,1.946374,1.943256,1.940069,1.937082,1.934435,1.932151,1.928783,1.924572,1.919513,1.914433,1.909779,1.904954,1.900338,1.897467,1.892466,1.8845,1.875462,1.868395,1.862473,1.85803,1.857006,1.85416,1.848489,1.840428,1.830772,1.81927,1.807206,1.79614,1.786665,1.778525,1.771885,1.765412,1.75837,1.748957,1.737721,1.725527,1.713236,1.701838,1.692431,1.684615,1.676041,1.666166,1.653884,1.638933,1.624099,1.611725,1.60158,1.593133,1.585708,1.577338,1.56617,1.55265,1.540606,1.525569,1.510531,1.49683,1.483114,1.471595,1.463126,1.455859,1.447459,1.434262,1.4183,1.402848,1.387201,1.3733,1.362103,1.352369,1.342816,1.333513,1.322987,1.310262,1.296538,1.281928,1.268245,1.25738,1.248104,1.23861,1.229767,1.221038,1.21057,1.198795,1.185612,1.17366,1.164667,1.157861,1.151755,1.145317,1.138116,1.129193,1.119835,1.112205,1.106468,1.102469,1.098896,1.095131,1.089837,1.084698,1.080194,1.07675,1.07497,1.074341],"stats":{"sent":110.0,"dropped":3.0,"drop_rate":0.02727272727272727,"latency_mean_s":0.011161663298001629,"latency_p95_s":0.01691899526783136,"latency_max_s":0.01805989193065887},"encoder_lsb":0.0015339807878856412},"bus_cfg":{"control_hz":50.0,"act_latency_s":0.012,"act_jitter_s":0.004,"dropout_p":0.01,"encoder_bits":12,"sense_latency_s":0.004},"noise_sigmas":{"q1":0.00044282,"q2":0.00044282,"q3":0.00044282,"v1":0.03131225,"v2":0.03131225,"v3":0.03131225,"box_x":0.0005,"box_y":0.0005,"box_t":0.00872665,"tip_x":0.00019041,"tip_y":0.00019041}}</script>
+<script>
+(function(){
+"use strict";
+const D = JSON.parse(document.getElementById("D").textContent);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = (v,d=2) => v.toFixed(d);
+
+/* ---------------- status strip ---------------- */
+const sp = D.spectra.push_only;
+document.getElementById("strip").innerHTML = [
+  ["Parameters", D.param_names.length],
+  ["State dims", 6],
+  ["Twin error", "+" + Math.round(D.perturbations.pct) + "%"],
+  ["Unidentifiable", sp.null + " of " + D.param_names.length],
+  ["Noise floor", "7.9×"],
+].map(([k,v]) => `<div><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+document.getElementById("lat").textContent = Math.round(D.bus_cfg.act_latency_s*1000);
+document.getElementById("lsb").textContent = (D.bus_demo.encoder_lsb*1000).toFixed(2) + " mrad";
+
+/* ---------------- canvas replay ---------------- */
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const G = D.geometry, L = G.links;
+const VX = [-0.12, 0.52], VY = [-0.26, 0.30];
+const WORLDS = [["plant","--s1"],["twin_stiff","--s2"],["twin_flat","--s3"]];
+let task = "familiar", frame = 0, playing = false, raf = null;
+const nFrames = () => D.runs[task].plant.t.length;
+
+function fit(){
+  const r = cv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio||1, 2);
+  cv.width = Math.max(320, Math.round(r.width*dpr));
+  cv.height = Math.round(cv.width * (VY[1]-VY[0])/(VX[1]-VX[0]));
+  draw();
+}
+const sx = () => cv.width/(VX[1]-VX[0]);
+const X = x => (x - VX[0])*sx();
+const Y = y => cv.height - (y - VY[0])*sx();
+
+function armPts(q){
+  let a = 0, p = [[0,0]], x = 0, y = 0;
+  for(let i=0;i<3;i++){ a += q[i]; x += L[i]*Math.cos(a); y += L[i]*Math.sin(a); p.push([x,y]); }
+  return p;
+}
+function boxPoly(b){
+  const h = G.box_half, cx = G.box_home[0]+b[0], cy = G.box_home[1]+b[1], t = b[2];
+  return [[-h,-h],[h,-h],[h,h],[-h,h]].map(([u,v]) =>
+    [cx + u*Math.cos(t) - v*Math.sin(t), cy + u*Math.sin(t) + v*Math.cos(t)]);
+}
+function circle(c,r,fill,stroke,w){
+  ctx.beginPath(); ctx.arc(X(c[0]),Y(c[1]),r*sx(),0,6.2832);
+  if(fill){ctx.fillStyle=fill;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=w||2;ctx.stroke();}
+}
+function draw(){
+  const S = sx(), k = cv.width/1300;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle = css("--surface"); ctx.fillRect(0,0,cv.width,cv.height);
+  // table grid
+  ctx.strokeStyle = css("--line"); ctx.lineWidth = 1;
+  for(let gx=-0.1; gx<=0.55; gx+=0.1){ ctx.beginPath(); ctx.moveTo(X(gx),0); ctx.lineTo(X(gx),cv.height); ctx.stroke(); }
+  for(let gy=-0.3; gy<=0.35; gy+=0.1){ ctx.beginPath(); ctx.moveTo(0,Y(gy)); ctx.lineTo(cv.width,Y(gy)); ctx.stroke(); }
+  // furniture
+  circle(G.target.xy, G.target.r, "transparent", css("--good"), 2*k);
+  circle(G.pipe.xy, G.pipe.r, css("--line-2"), css("--ink-3"), 1.5*k);
+  circle(G.bolt.xy, G.bolt.r, css("--ink-3"), null, 0);
+  ctx.fillStyle = css("--ink-3"); ctx.font = `${13*k}px ${css("--font-mono")||"monospace"}`;
+  ctx.fillText("pipe", X(G.pipe.xy[0])+G.pipe.r*S+6*k, Y(G.pipe.xy[1])+4*k);
+  ctx.fillText("bolt", X(G.bolt.xy[0])+G.bolt.r*S+6*k, Y(G.bolt.xy[1])+4*k);
+  ctx.fillStyle = css("--good"); ctx.fillText("target", X(G.target.xy[0])+G.target.r*S+6*k, Y(G.target.xy[1])+4*k);
+
+  const f = Math.min(frame, nFrames()-1);
+  for(const [name,tok] of WORLDS){
+    if(!shown[name]) continue;
+    const r = D.runs[task][name], col = css(tok);
+    // block trail
+    ctx.strokeStyle = col; ctx.globalAlpha = .3; ctx.lineWidth = 2*k; ctx.beginPath();
+    for(let i=0;i<=f;i++){ const c=[G.box_home[0]+r.box[i][0],G.box_home[1]+r.box[i][1]];
+      i?ctx.lineTo(X(c[0]),Y(c[1])):ctx.moveTo(X(c[0]),Y(c[1])); }
+    ctx.stroke(); ctx.globalAlpha = 1;
+    // block
+    const poly = boxPoly(r.box[f]);
+    ctx.beginPath(); poly.forEach((p,i)=> i?ctx.lineTo(X(p[0]),Y(p[1])):ctx.moveTo(X(p[0]),Y(p[1]))); ctx.closePath();
+    ctx.fillStyle = col; ctx.globalAlpha = name==="plant"?.26:.13; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = col; ctx.lineWidth = (name==="plant"?3:2)*k; ctx.stroke();
+    // arm
+    const pts = armPts(r.q[f]);
+    ctx.strokeStyle = col; ctx.lineWidth = (name==="plant"?7:4)*k;
+    ctx.lineCap="round"; ctx.lineJoin="round"; ctx.globalAlpha = name==="plant"?.95:.6;
+    ctx.beginPath(); pts.forEach((p,i)=> i?ctx.lineTo(X(p[0]),Y(p[1])):ctx.moveTo(X(p[0]),Y(p[1]))); ctx.stroke();
+    ctx.globalAlpha = 1;
+    circle(pts[3], G.tip_r, col, null, 0);
+  }
+  // readouts
+  const ref = D.runs[task].plant.box[f];
+  for(const [name,id] of [["twin_stiff","e_stiff"],["twin_flat","e_flat"]]){
+    const b = D.runs[task][name].box[f];
+    const mm = Math.hypot(b[0]-ref[0], b[1]-ref[1])*1000;
+    document.getElementById(id).textContent = (mm < 0.005 ? "0.00" : fmt(mm,2)) + " mm";
+  }
+  document.getElementById("tlabel").textContent = "t = " + fmt(D.runs[task].plant.t[f],2) + " s";
+}
+const shown = {plant:true, twin_stiff:true, twin_flat:true};
+const scrub = document.getElementById("scrub"), playBtn = document.getElementById("play");
+scrub.addEventListener("input", e => { frame = +e.target.value; stop(); draw(); });
+function stop(){ playing=false; playBtn.textContent="Play"; playBtn.setAttribute("aria-pressed","false"); if(raf) cancelAnimationFrame(raf); raf=null; }
+function tick(){ if(!playing) return; frame = (frame+1) % nFrames(); scrub.value = frame; draw(); raf = requestAnimationFrame(()=>setTimeout(tick,45)); }
+playBtn.addEventListener("click", () => {
+  playing = !playing;
+  playBtn.textContent = playing ? "Pause" : "Play";
+  playBtn.setAttribute("aria-pressed", String(playing));
+  if(playing){ if(frame >= nFrames()-1) frame = 0; tick(); } else stop();
+});
+document.querySelectorAll(".task").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".task").forEach(o => o.setAttribute("aria-pressed", String(o===b)));
+  task = b.dataset.task; frame = 0; scrub.value = 0; scrub.max = nFrames()-1; stop(); draw();
+}));
+
+/* ---------------- small SVG chart helpers ---------------- */
+const NS = "http://www.w3.org/2000/svg";
+function el(n, a){ const e = document.createElementNS(NS,n); for(const k in a) e.setAttribute(k,a[k]); return e; }
+function axes(svg, box, xl, yl){
+  const g = el("g",{});
+  g.appendChild(el("line",{x1:box.l,y1:box.b,x2:box.r,y2:box.b,stroke:css("--line-2"),"stroke-width":1}));
+  g.appendChild(el("line",{x1:box.l,y1:box.t,x2:box.l,y2:box.b,stroke:css("--line-2"),"stroke-width":1}));
+  const tx = el("text",{x:(box.l+box.r)/2,y:box.b+34,fill:css("--ink-3"),"font-size":11,"text-anchor":"middle","font-family":"var(--font-mono)"});
+  tx.textContent = xl; g.appendChild(tx);
+  const ty = el("text",{x:box.l-34,y:(box.t+box.b)/2,fill:css("--ink-3"),"font-size":11,"text-anchor":"middle","font-family":"var(--font-mono)",transform:`rotate(-90 ${box.l-34} ${(box.t+box.b)/2})`});
+  ty.textContent = yl; g.appendChild(ty);
+  svg.appendChild(g);
+}
+function path(svg, pts, col, w, dash){
+  const d = pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+  svg.appendChild(el("path",{d, fill:"none", stroke:col, "stroke-width":w||2,
+    "stroke-linejoin":"round","stroke-linecap":"round", ...(dash?{"stroke-dasharray":dash}:{})}));
+}
+function axisText(svg, x, y, txt, anchor){
+  const t = el("text",{x,y,fill:css("--ink-3"),"font-size":10,"text-anchor":anchor||"middle","font-family":"var(--font-mono)"});
+  t.textContent = txt; svg.appendChild(t);
+}
+
+/* bus chart: commanded vs held */
+function busChart(){
+  const svg = document.getElementById("busfig"); svg.textContent = "";
+  const B = {l:48,r:430,t:14,b:168}, d = D.bus_demo, N = 55;
+  const t = d.t.slice(0,N), c = d.cmd.slice(0,N), e = d.eff.slice(0,N);
+  const lo = Math.min(...c,...e), hi = Math.max(...c,...e), pad = (hi-lo)*0.12 || 0.01;
+  const px = i => B.l + (i/(N-1))*(B.r-B.l);
+  const py = v => B.b - ((v-lo+pad)/((hi-lo)+2*pad))*(B.b-B.t);
+  axes(svg,B,"time (s)","joint 2 (rad)");
+  const step = arr => { const p=[]; for(let i=0;i<N;i++){ if(i) p.push([px(i),py(arr[i-1])]); p.push([px(i),py(arr[i])]); } return p; };
+  path(svg, step(c), css("--ink-3"), 2, "4 3");
+  path(svg, step(e), css("--s1"), 2.5);
+  [0,Math.floor(N/2),N-1].forEach(i => axisText(svg, px(i), B.b+16, t[i].toFixed(2)));
+  axisText(svg, B.l-6, py(hi)+3, hi.toFixed(2), "end"); axisText(svg, B.l-6, py(lo)+3, lo.toFixed(2), "end");
+  const lg = el("g",{});
+  lg.appendChild(el("line",{x1:B.l,y1:196,x2:B.l+18,y2:196,stroke:css("--ink-3"),"stroke-width":2,"stroke-dasharray":"4 3"}));
+  let a = el("text",{x:B.l+24,y:200,fill:css("--ink-2"),"font-size":11}); a.textContent="commanded"; lg.appendChild(a);
+  lg.appendChild(el("line",{x1:B.l+118,y1:196,x2:B.l+136,y2:196,stroke:css("--s1"),"stroke-width":2.5}));
+  let b2 = el("text",{x:B.l+142,y:200,fill:css("--ink-2"),"font-size":11}); b2.textContent="held by the servo"; lg.appendChild(b2);
+  svg.appendChild(lg);
+}
+/* encoder staircase */
+function encChart(){
+  const svg = document.getElementById("encfig"); svg.textContent = "";
+  const B = {l:56,r:430,t:14,b:168}, d = D.bus_demo, s = 28, N = 34;
+  const tr = d.q_true.slice(s,s+N), ob = d.q_obs.slice(s,s+N), t = d.t.slice(s,s+N);
+  const lo = Math.min(...tr,...ob), hi = Math.max(...tr,...ob), pad=(hi-lo)*0.18||1e-3;
+  const px = i => B.l + (i/(N-1))*(B.r-B.l);
+  const py = v => B.b - ((v-lo+pad)/((hi-lo)+2*pad))*(B.b-B.t);
+  axes(svg,B,"time (s)","joint 2 (rad)");
+  path(svg, tr.map((v,i)=>[px(i),py(v)]), css("--ink-3"), 2, "4 3");
+  const st=[]; for(let i=0;i<N;i++){ if(i) st.push([px(i),py(ob[i-1])]); st.push([px(i),py(ob[i])]); }
+  path(svg, st, css("--s2"), 2.5);
+  [0,Math.floor(N/2),N-1].forEach(i => axisText(svg, px(i), B.b+16, t[i].toFixed(2)));
+  axisText(svg, B.l-6, py(hi)+3, hi.toFixed(3), "end"); axisText(svg, B.l-6, py(lo)+3, lo.toFixed(3), "end");
+  const lg = el("g",{});
+  lg.appendChild(el("line",{x1:B.l,y1:196,x2:B.l+18,y2:196,stroke:css("--ink-3"),"stroke-width":2,"stroke-dasharray":"4 3"}));
+  let a=el("text",{x:B.l+24,y:200,fill:css("--ink-2"),"font-size":11}); a.textContent="true angle"; lg.appendChild(a);
+  lg.appendChild(el("line",{x1:B.l+104,y1:196,x2:B.l+122,y2:196,stroke:css("--s2"),"stroke-width":2.5}));
+  let b2=el("text",{x:B.l+128,y:200,fill:css("--ink-2"),"font-size":11}); b2.textContent="what the encoder reports"; lg.appendChild(b2);
+  svg.appendChild(lg);
+}
+/* spectrum */
+let specKey = "push_only";
+function specChart(){
+  const svg = document.getElementById("specfig"); svg.textContent = "";
+  const S = D.spectra[specKey], n = D.param_names.length;
+  const B = {l:74,r:424,t:10,b:246};
+  const logs = S.eigvals.map(v => v>0 ? Math.log10(v) : null);
+  const finite = logs.filter(v => v!==null);
+  const hi = Math.max(...finite), lo = Math.min(...finite);
+  const bh = (B.b-B.t)/n;
+  const cut = Math.log10(Math.max(...S.eigvals) * 1e-3);
+  for(let i=n-1;i>=0;i--){
+    const r = n-1-i, y = B.t + r*bh + 2.5, h = bh-5;
+    const v = logs[i];
+    const steep = S.eigvals[i] > Math.max(...S.eigvals)*1e-3;
+    const w = v===null ? 3 : Math.max(3, ((v-lo+0.6)/(hi-lo+0.6))*(B.r-B.l));
+    svg.appendChild(el("rect",{x:B.l,y,width:w,height:h,rx:3,
+      fill: v===null ? css("--bad") : (steep ? css("--s1") : css("--s2")), opacity: v===null?1:.9}));
+    const vec = S.eigvecs.map(row => row[i]);
+    let bi=0; vec.forEach((q,j)=>{ if(Math.abs(q)>Math.abs(vec[bi])) bi=j; });
+    const lab = el("text",{x:B.l-7,y:y+h/2+3.5,fill:css("--ink-2"),"font-size":10,"text-anchor":"end","font-family":"var(--font-mono)"});
+    lab.textContent = D.param_names[bi]; svg.appendChild(lab);
+    if(v===null){
+      const z = el("text",{x:B.l+10,y:y+h/2+3.5,fill:css("--bad"),"font-size":10,"font-family":"var(--font-mono)"});
+      z.textContent = "exactly zero — invisible to the data"; svg.appendChild(z);
+    }
+  }
+  svg.appendChild(el("line",{x1:B.l,y1:B.t,x2:B.l,y2:B.b,stroke:css("--line-2"),"stroke-width":1}));
+  axisText(svg, B.l, B.b+18, "flat", "start"); axisText(svg, B.r, B.b+18, "steep →", "end");
+  const t2 = el("text",{x:(B.l+B.r)/2,y:B.b+36,fill:css("--ink-3"),"font-size":11,"text-anchor":"middle","font-family":"var(--font-mono)"});
+  t2.textContent = "curvature of the fit (log scale)"; svg.appendChild(t2);
+  const lg = el("g",{});
+  lg.appendChild(el("rect",{x:B.l,y:B.b+48,width:13,height:8,rx:2,fill:css("--s1")}));
+  let a=el("text",{x:B.l+20,y:B.b+56,fill:css("--ink-2"),"font-size":11}); a.textContent="pinned down by the data"; lg.appendChild(a);
+  lg.appendChild(el("rect",{x:B.l+178,y:B.b+48,width:13,height:8,rx:2,fill:css("--s2")}));
+  let b2=el("text",{x:B.l+198,y:B.b+56,fill:css("--ink-2"),"font-size":11}); b2.textContent="labelled unidentifiable"; lg.appendChild(b2);
+  svg.appendChild(lg);
+  document.getElementById("speccap").innerHTML =
+    `Each bar is one direction in parameter space, labelled by the parameter that dominates it. With <strong>${S.n_push} pushes${S.n_free?" and "+S.n_free+" free sweeps":""}</strong>, <strong class="mono">${S.eff_rank}</strong> of ${n} directions clear the cutoff and <strong class="mono">${S.flat_dim}</strong> fall below it.`;
+}
+document.querySelectorAll(".spec").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".spec").forEach(o => o.setAttribute("aria-pressed", String(o===b)));
+  specKey = b.dataset.spec; specChart();
+}));
+
+/* F5 table + sweep */
+(function(){
+  const rows = [
+    ["30 pushes", D.spectra.push_only, D.demoA.familiar.stiff.whitened_rms, D.demoA.familiar.flat.whitened_rms],
+    ["30 pushes + 8 free sweeps", D.spectra.mixed, D.sweep[3].stiff, D.sweep[3].flat],
+  ];
+  document.getElementById("f5tbl").innerHTML = rows.map(([n,S,a,b]) =>
+    `<tr><td>${n}</td><td class="num">${S.eff_rank} / 18</td>
+     <td class="num" style="color:var(--s2)">${fmt(a,2)}</td>
+     <td class="num" style="color:var(--s3)">${b<0.005?"0.00":fmt(b,2)}</td></tr>`).join("");
+})();
+function sweepChart(){
+  const svg = document.getElementById("sweepfig"); svg.textContent = "";
+  const B = {l:52,r:428,t:14,b:176}, S = D.sweep;
+  const hi = Math.max(...S.map(s=>Math.max(s.stiff,s.flat)));
+  const px = i => B.l + 26 + (i/(S.length-1))*(B.r-B.l-52);
+  const py = v => B.b - (v/(hi*1.1))*(B.b-B.t);
+  axes(svg,B,"size of the parameter error","divergence");
+  [0,hi/2,hi].forEach(v => { axisText(svg, B.l-6, py(v)+3, v.toFixed(1), "end");
+    svg.appendChild(el("line",{x1:B.l,y1:py(v),x2:B.r,y2:py(v),stroke:css("--line"),"stroke-width":1})); });
+  path(svg, S.map((s,i)=>[px(i),py(s.stiff)]), css("--s2"), 2.5);
+  path(svg, S.map((s,i)=>[px(i),py(s.flat)]), css("--s3"), 2.5);
+  S.forEach((s,i) => {
+    svg.appendChild(el("circle",{cx:px(i),cy:py(s.stiff),r:4.5,fill:css("--s2"),stroke:css("--surface"),"stroke-width":2}));
+    svg.appendChild(el("circle",{cx:px(i),cy:py(s.flat),r:4.5,fill:css("--s3"),stroke:css("--surface"),"stroke-width":2}));
+    axisText(svg, px(i), B.b+16, s.mag.toFixed(2));
+  });
+  const last = S[S.length-1];
+  let a = el("text",{x:px(S.length-1)-8,y:py(last.stiff)+4,fill:css("--s2"),"font-size":11,"text-anchor":"end","font-weight":600});
+  a.textContent = "steep"; svg.appendChild(a);
+  let b = el("text",{x:px(S.length-1)-8,y:py(last.flat)+4,fill:css("--s3"),"font-size":11,"text-anchor":"end","font-weight":600});
+  b.textContent = "flat"; svg.appendChild(b);
+  const lg = el("text",{x:B.l,y:B.b+42,fill:css("--ink-2"),"font-size":11});
+  lg.textContent = "the direction labelled “flat” diverges more at every size"; svg.appendChild(lg);
+}
+
+/* ---------------- boot ---------------- */
+function renderAll(){ fit(); busChart(); encChart(); specChart(); sweepChart(); }
+scrub.max = nFrames()-1;
+renderAll();
+addEventListener("resize", () => { clearTimeout(window.__rt); window.__rt = setTimeout(renderAll, 140); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderAll);
+new MutationObserver(renderAll).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+})();
+</script>

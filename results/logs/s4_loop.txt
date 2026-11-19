@@ -1,0 +1,265 @@
+
+==================================================================
+[direct / open]  300 episodes, 99s (0.33s each)
+  CLEAN SUCCESS    265/300   88.3%
+  goal reached     265/300   88.3%
+
+  by goal kind:
+    at-occupied-spot       70/105   66.7%
+    next-to                81/81   100.0%
+    to-side                57/57   100.0%
+    on-pad                 46/46   100.0%
+    away-from              11/11   100.0%
+
+  plan chosen:
+    direct                265/300   88.3%
+
+  SKILL self-report vs. what actually happened
+                       actually clean   actually not
+    said success           265              21
+    said failure             0              14
+    agreement 93.0%   false confidence 21/286 of its 'success' calls
+
+  CAMERA verifier (after acting; judged 300/300) vs. what actually happened
+                       actually clean   actually not
+    said success           263               0
+    said failure             2              35
+    agreement 99.3%   false confidence 0/263 of its 'success' calls
+  verifier declined to judge: 0/300
+
+  failure reasons:
+      21  placed
+      14  placed_off_target
+  per seed: 0: 88.0%  1: 92.0%  2: 81.3%  3: 92.0%
+
+==================================================================
+[loop / open]  300 episodes, 166s (0.55s each)
+  CLEAN SUCCESS    290/300   96.7%
+  goal reached     290/300   96.7%
+
+  by goal kind:
+    at-occupied-spot       95/105   90.5%
+    next-to                81/81   100.0%
+    to-side                57/57   100.0%
+    on-pad                 46/46   100.0%
+    away-from              11/11   100.0%
+
+  plan chosen:
+    direct                229/239   95.8%
+    clear-then-place       61/61   100.0%
+    rollouts per episode: mean 1.20, max 2
+
+  SKILL self-report vs. what actually happened
+                       actually clean   actually not
+    said success           290               7
+    said failure             0               3
+    agreement 97.7%   false confidence 7/297 of its 'success' calls
+
+  TWIN prediction (before acting) vs. what actually happened
+                       actually clean   actually not
+    said success           290              10
+    said failure             0               0
+    agreement 96.7%   false confidence 10/300 of its 'success' calls
+
+  CAMERA verifier (after acting; judged 300/300) vs. what actually happened
+                       actually clean   actually not
+    said success           288               0
+    said failure             2              10
+    agreement 99.3%   false confidence 0/288 of its 'success' calls
+  verifier declined to judge: 0/300
+
+  failure reasons:
+       7  placed
+       3  placed_off_target
+  per seed: 0: 98.7%  1: 98.7%  2: 89.3%  3: 100.0%
+
+==================================================================
+[loop-exact / open]  300 episodes, 160s (0.53s each)
+  CLEAN SUCCESS    287/300   95.7%
+  goal reached     287/300   95.7%
+
+  by goal kind:
+    at-occupied-spot       92/105   87.6%
+    next-to                81/81   100.0%
+    to-side                57/57   100.0%
+    on-pad                 46/46   100.0%
+    away-from              11/11   100.0%
+
+  plan chosen:
+    direct                236/249   94.8%
+    clear-then-place       51/51   100.0%
+    rollouts per episode: mean 1.17, max 2
+
+  SKILL self-report vs. what actually happened
+                       actually clean   actually not
+    said success           287               8
+    said failure             0               5
+    agreement 97.3%   false confidence 8/295 of its 'success' calls
+
+  TWIN prediction (before acting) vs. what actually happened
+                       actually clean   actually not
+    said success           287              13
+    said failure             0               0
+    agreement 95.7%   false confidence 13/300 of its 'success' calls
+
+  CAMERA verifier (after acting; judged 300/300) vs. what actually happened
+                       actually clean   actually not
+    said success           285               0
+    said failure             2              13
+    agreement 99.3%   false confidence 0/285 of its 'success' calls
+  verifier declined to judge: 0/300
+
+  failure reasons:
+       8  placed
+       5  placed_off_target
+  per seed: 0: 94.7%  1: 97.3%  2: 93.3%  3: 97.3%
+
+==================================================================
+[direct / cluttered]  300 episodes, 114s (0.38s each)
+  CLEAN SUCCESS    238/300   79.3%
+  goal reached     238/300   79.3%
+
+  by goal kind:
+    at-occupied-spot       69/124   55.6%
+    next-to                93/97    95.9%
+    to-side                48/48   100.0%
+    on-pad                 15/17    88.2%
+    away-from              13/14    92.9%
+
+  plan chosen:
+    direct                238/300   79.3%
+
+  SKILL self-report vs. what actually happened
+                       actually clean   actually not
+    said success           235              26
+    said failure             3              36
+    agreement 90.3%   false confidence 26/261 of its 'success' calls
+
+  CAMERA verifier (after acting; judged 300/300) vs. what actually happened
+                       actually clean   actually not
+    said success           237               0
+    said failure             1              62
+    agreement 99.7%   false confidence 0/237 of its 'success' calls
+  verifier declined to judge: 0/300
+
+  failure reasons:
+      26  placed
+      22  placed_off_target
+       7  dropped_in_transit
+       5  grasp_missed
+       2  object_slipped
+  per seed: 0: 80.0%  1: 78.7%  2: 76.0%  3: 82.7%
+
+==================================================================
+[loop / cluttered]  300 episodes, 231s (0.77s each)
+  CLEAN SUCCESS    271/300   90.3%
+  goal reached     271/300   90.3%
+
+  by goal kind:
+    at-occupied-spot      100/124   80.6%
+    next-to                95/97    97.9%
+    to-side                48/48   100.0%
+    on-pad                 15/17    88.2%
+    away-from              13/14    92.9%
+
+  plan chosen:
+    direct                212/236   89.8%
+    clear-then-place       56/59    94.9%
+    turn-wrist              3/5     60.0%
+    rollouts per episode: mean 1.28, max 4
+
+  SKILL self-report vs. what actually happened
+                       actually clean   actually not
+    said success           268              12
+    said failure             3              17
+    agreement 95.0%   false confidence 12/280 of its 'success' calls
+
+  TWIN prediction (before acting) vs. what actually happened
+                       actually clean   actually not
+    said success           267              22
+    said failure             4               7
+    agreement 91.3%   false confidence 22/289 of its 'success' calls
+
+  CAMERA verifier (after acting; judged 300/300) vs. what actually happened
+                       actually clean   actually not
+    said success           270               0
+    said failure             1              29
+    agreement 99.7%   false confidence 0/270 of its 'success' calls
+  verifier declined to judge: 0/300
+
+  failure reasons:
+      12  placed
+       8  placed_off_target
+       6  dropped_in_transit
+       3  grasp_missed
+  per seed: 0: 86.7%  1: 93.3%  2: 88.0%  3: 93.3%
+
+==================================================================
+[loop-exact / cluttered]  300 episodes, 223s (0.74s each)
+  CLEAN SUCCESS    256/300   85.3%
+  goal reached     256/300   85.3%
+
+  by goal kind:
+    at-occupied-spot       85/124   68.5%
+    next-to                95/97    97.9%
+    to-side                48/48   100.0%
+    on-pad                 15/17    88.2%
+    away-from              13/14    92.9%
+
+  plan chosen:
+    direct                208/246   84.6%
+    clear-then-place       45/51    88.2%
+    turn-wrist              3/3    100.0%
+    rollouts per episode: mean 1.23, max 4
+
+  SKILL self-report vs. what actually happened
+                       actually clean   actually not
+    said success           254              20
+    said failure             2              24
+    agreement 92.7%   false confidence 20/274 of its 'success' calls
+
+  TWIN prediction (before acting) vs. what actually happened
+                       actually clean   actually not
+    said success           254              38
+    said failure             2               6
+    agreement 86.7%   false confidence 38/292 of its 'success' calls
+
+  CAMERA verifier (after acting; judged 300/300) vs. what actually happened
+                       actually clean   actually not
+    said success           256               0
+    said failure             0              44
+    agreement 100.0%   false confidence 0/256 of its 'success' calls
+  verifier declined to judge: 0/300
+
+  failure reasons:
+      20  placed
+      12  placed_off_target
+       8  dropped_in_transit
+       3  grasp_missed
+       1  object_slipped
+  per seed: 0: 81.3%  1: 85.3%  2: 85.3%  3: 89.3%
+
+==================================================================
+PAIRED COMPARISONS
+
+--- open ---
+
+  PAIRED  loop vs direct  (300 shared episodes)
+    both clean 265   both failed 10
+    loop rescued 25   loop broke 0   net +25   McNemar p = 6e-08
+
+  PAIRED  loop-exact vs loop  (300 shared episodes)
+    both clean 284   both failed 7
+    loop-exact rescued 3   loop-exact broke 6   net -3   McNemar p = 0.51
+
+--- cluttered ---
+
+  PAIRED  loop vs direct  (300 shared episodes)
+    both clean 237   both failed 28
+    loop rescued 34   loop broke 1   net +33   McNemar p = 2.1e-09
+
+  PAIRED  loop-exact vs loop  (300 shared episodes)
+    both clean 255   both failed 28
+    loop-exact rescued 1   loop-exact broke 16   net -15   McNemar p = 0.00027
+
+wrote /Users/s/Documents/k/oregon/results/s4_loop.json

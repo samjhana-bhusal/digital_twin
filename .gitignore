@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+results/logs/*.npz
+results/logs/*.json
+.DS_Store
+.pytest_cache/
+
+# LaTeX build artefacts; paper.pdf itself is committed, since it is the
+# deliverable and rebuilding it needs a TeX toolchain.
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/*.xdv

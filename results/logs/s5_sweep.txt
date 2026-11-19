@@ -1,0 +1,52 @@
+AGX: exceeded compiled variants footprint limit
+
+=== SWEEP (cluttered) — signed mis-specification along `nominal` ===
+  negative = the mirror twin (lighter, grippier); +1 = the S4 default
+
+  -3.0x nominal                      clean  84.3%  occupied  66.1%  twin-agree  86.3%  false-conf 13.7%  2-step  9.3%
+  -2.0x nominal                      clean  86.7%  occupied  71.8%  twin-agree  89.0%  false-conf 11.0%  2-step 14.0%
+  -1.0x nominal                      clean  88.3%  occupied  75.8%  twin-agree  89.7%  false-conf  9.3%  2-step 20.0%
+  -0.5x nominal                      clean  87.3%  occupied  73.4%  twin-agree  87.0%  false-conf 11.0%  2-step 17.0%
+  +0.0x nominal                      clean  85.3%  occupied  68.5%  twin-agree  86.7%  false-conf 12.7%  2-step 17.0%
+  +0.5x nominal                      clean  87.0%  occupied  72.6%  twin-agree  88.3%  false-conf 10.7%  2-step 19.7%
+  +1.0x nominal                      clean  90.3%  occupied  80.6%  twin-agree  91.3%  false-conf  7.3%  2-step 19.7%
+  +2.0x nominal                      clean  89.0%  occupied  77.4%  twin-agree  91.7%  false-conf  7.7%  2-step 17.7%
+  +3.0x nominal                      clean  90.0%  occupied  78.2%  twin-agree  92.0%  false-conf  7.3%  2-step 21.3%
+
+  paired against the exact twin (0.0x):
+
+  PAIRED  -3.0x nominal vs exact  (300 shared episodes)
+    both clean 245   both failed 36
+    -3.0x nominal rescued 8   -3.0x nominal broke 11   net -3   McNemar p = 0.65
+
+  PAIRED  -2.0x nominal vs exact  (300 shared episodes)
+    both clean 249   both failed 33
+    -2.0x nominal rescued 11   -2.0x nominal broke 7   net +4   McNemar p = 0.48
+
+  PAIRED  -1.0x nominal vs exact  (300 shared episodes)
+    both clean 251   both failed 30
+    -1.0x nominal rescued 14   -1.0x nominal broke 5   net +9   McNemar p = 0.064
+
+  PAIRED  -0.5x nominal vs exact  (300 shared episodes)
+    both clean 253   both failed 35
+    -0.5x nominal rescued 9   -0.5x nominal broke 3   net +6   McNemar p = 0.15
+
+  PAIRED  +0.5x nominal vs exact  (300 shared episodes)
+    both clean 253   both failed 36
+    +0.5x nominal rescued 8   +0.5x nominal broke 3   net +5   McNemar p = 0.23
+
+  PAIRED  +1.0x nominal vs exact  (300 shared episodes)
+    both clean 255   both failed 28
+    +1.0x nominal rescued 16   +1.0x nominal broke 1   net +15   McNemar p = 0.00027
+
+  PAIRED  +2.0x nominal vs exact  (300 shared episodes)
+    both clean 249   both failed 26
+    +2.0x nominal rescued 18   +2.0x nominal broke 7   net +11   McNemar p = 0.043
+
+  PAIRED  +3.0x nominal vs exact  (300 shared episodes)
+    both clean 247   both failed 21
+    +3.0x nominal rescued 23   +3.0x nominal broke 9   net +14   McNemar p = 0.02
+
+wrote /Users/s/Documents/k/oregon/results/figures/s5_fidelity.png
+
+wrote /Users/s/Documents/k/oregon/results/s5_sweep.json

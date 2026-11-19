@@ -1,0 +1,14 @@
+{
+ "task_sensitivity_pts_per_log": {
+  "cube_mass": 9.096565781247907,
+  "cube_friction": 6.82242433593593,
+  "joint_damping": 0.0
+ },
+ "identification_sigma_per_log": {
+  "cube_mass": 65.62866388268063,
+  "cube_friction": 174.03919181412144,
+  "joint_damping": 29.46091382681773
+ },
+ "cosine": 0.8332934153240308,
+ "angle_deg": 33.561447116833044
+}

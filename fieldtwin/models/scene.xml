@@ -1,0 +1,101 @@
+<mujoco model="fieldtwin_pusher">
+  <!--
+    fieldtwin: planar pushing scene, shared by BOTH the plant and the twin.
+
+    There is exactly one XML on purpose. The plant and the twin are the same
+    kinematics with different *numeric* parameters, applied after load by
+    fieldtwin.models.params. That guarantees the only difference between the
+    two worlds is the parameter vector under study, which is the experimental
+    control the whole project rests on. Two hand-maintained XMLs would drift.
+
+    Modelling choices, and why:
+      * The box is constrained to the plane by composed slide/slide/hinge
+        joints instead of a free joint. State stays exactly 3-dim (x, y, theta),
+        the box cannot tip, and the integrator stays well behaved.
+      * The table is a VISUAL geom only (contype=0). Table friction is modelled
+        as frictionloss on the box's three joints rather than as a contact with
+        the floor, which would fight the planar constraint and chatter.
+      * Only the fingertip collides. Arm links are visual (contype=0), so the
+        contact set is tiny and every contact in a rollout is a contact we meant.
+      * Distractor objects (pipe, bolt) exist so that VLM grounding queries in
+        R3 are non-trivial rather than "find the only object in the scene".
+  -->
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.002" integrator="implicitfast" gravity="0 0 -9.81"/>
+
+  <default>
+    <joint armature="0.0008"/>
+    <geom condim="3" friction="0.6 0.005 0.0001"/>
+    <position ctrlrange="-2.8 2.8"/>
+  </default>
+
+  <asset>
+    <texture name="grid" type="2d" builtin="checker"
+             rgb1="0.24 0.26 0.28" rgb2="0.30 0.32 0.34" width="300" height="300"/>
+    <material name="tablemat" texture="grid" texrepeat="6 6" reflectance="0.05"/>
+  </asset>
+
+  <worldbody>
+    <light name="key"  pos="0.35 -0.10 1.10" dir="0 0 -1" diffuse="0.85 0.85 0.85"/>
+    <light name="fill" pos="-0.10 0.40 0.80" dir="0.2 -0.4 -1" diffuse="0.25 0.25 0.28"/>
+
+    <camera name="overhead" pos="0.26 0.02 0.95" xyaxes="1 0 0 0 1 0"/>
+    <camera name="oblique"  pos="0.26 -0.62 0.52" xyaxes="1 0 0 0 0.6 0.8"/>
+
+    <!-- visual table only; see header note -->
+    <geom name="table" type="plane" size="1 1 0.05" material="tablemat"
+          contype="0" conaffinity="0"/>
+
+    <!-- ===================== arm: 3-link planar, hinges about +z ===================== -->
+    <body name="base" pos="0 0 0.06">
+      <geom name="g_base" type="cylinder" size="0.035 0.030" mass="0.50"
+            rgba="0.33 0.35 0.38 1" contype="0" conaffinity="0"/>
+      <body name="link1">
+        <joint name="j1" type="hinge" axis="0 0 1" range="-2.80 2.80"
+               damping="0.060" frictionloss="0.0040"/>
+        <geom name="g_link1" type="capsule" fromto="0 0 0 0.18 0 0" size="0.016" mass="0.250"
+              rgba="0.60 0.62 0.66 1" contype="0" conaffinity="0"/>
+        <body name="link2" pos="0.18 0 0">
+          <joint name="j2" type="hinge" axis="0 0 1" range="-2.40 2.40"
+                 damping="0.045" frictionloss="0.0030"/>
+          <geom name="g_link2" type="capsule" fromto="0 0 0 0.15 0 0" size="0.014" mass="0.180"
+                rgba="0.60 0.62 0.66 1" contype="0" conaffinity="0"/>
+          <body name="link3" pos="0.15 0 0">
+            <joint name="j3" type="hinge" axis="0 0 1" range="-2.40 2.40"
+                   damping="0.030" frictionloss="0.0022"/>
+            <geom name="g_link3" type="capsule" fromto="0 0 0 0.10 0 0" size="0.012" mass="0.100"
+                  rgba="0.60 0.62 0.66 1" contype="0" conaffinity="0"/>
+            <!-- the only colliding part of the arm -->
+            <geom name="g_tip" type="cylinder" pos="0.10 0 0" size="0.012 0.030" mass="0.030"
+                  rgba="0.88 0.48 0.20 1" friction="0.45 0.005 0.0001"/>
+            <site name="s_tip" pos="0.10 0 0" size="0.004" rgba="1 1 0 1"/>
+          </body>
+        </body>
+      </body>
+    </body>
+
+    <!-- ===================== manipulated object ===================== -->
+    <body name="box" pos="0.300 0.060 0.060">
+      <joint name="bx" type="slide" axis="1 0 0" damping="0.0" frictionloss="0.550"/>
+      <joint name="by" type="slide" axis="0 1 0" damping="0.0" frictionloss="0.550"/>
+      <joint name="bt" type="hinge" axis="0 0 1" damping="0.0" frictionloss="0.0180"/>
+      <geom name="g_box" type="box" size="0.035 0.035 0.030" mass="0.200"
+            rgba="0.80 0.26 0.22 1" friction="0.50 0.005 0.0001"/>
+    </body>
+
+    <!-- ===================== static scene furniture (for R3 grounding) ===================== -->
+    <geom name="g_pipe" type="cylinder" pos="0.355 -0.150 0.110" size="0.025 0.080"
+          rgba="0.44 0.46 0.50 1"/>
+    <geom name="g_bolt" type="cylinder" pos="0.170 -0.195 0.072" size="0.009 0.012"
+          rgba="0.56 0.43 0.26 1"/>
+    <geom name="g_target" type="cylinder" pos="0.400 0.225 0.0315" size="0.050 0.001"
+          rgba="0.22 0.62 0.36 0.45" contype="0" conaffinity="0"/>
+  </worldbody>
+
+  <actuator>
+    <!-- servo-like position actuators; kp is an identified parameter, not a given -->
+    <position name="a1" joint="j1" kp="14.0"/>
+    <position name="a2" joint="j2" kp="10.0"/>
+    <position name="a3" joint="j3" kp="6.5"/>
+  </actuator>
+</mujoco>

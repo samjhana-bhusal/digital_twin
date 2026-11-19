@@ -1,0 +1,78 @@
+{
+ "directions": {
+  "stats": {
+   "mass +1": {
+    "label": "mass +1",
+    "n": 200,
+    "clean": 0.885,
+    "occupied_spot": 0.7816091954022989,
+    "twin_agreement": 0.92,
+    "twin_false_confidence": 0.075,
+    "two_step_share": 0.24,
+    "sims": 1.33
+   },
+   "mass -1": {
+    "label": "mass -1",
+    "n": 200,
+    "clean": 0.845,
+    "occupied_spot": 0.6896551724137931,
+    "twin_agreement": 0.865,
+    "twin_false_confidence": 0.135,
+    "two_step_share": 0.16,
+    "sims": 1.205
+   },
+   "friction +1": {
+    "label": "friction +1",
+    "n": 200,
+    "clean": 0.865,
+    "occupied_spot": 0.735632183908046,
+    "twin_agreement": 0.865,
+    "twin_false_confidence": 0.12,
+    "two_step_share": 0.235,
+    "sims": 1.295
+   },
+   "friction -1": {
+    "label": "friction -1",
+    "n": 200,
+    "clean": 0.835,
+    "occupied_spot": 0.6666666666666666,
+    "twin_agreement": 0.855,
+    "twin_false_confidence": 0.14,
+    "two_step_share": 0.195,
+    "sims": 1.26
+   },
+   "damping +1": {
+    "label": "damping +1",
+    "n": 200,
+    "clean": 0.855,
+    "occupied_spot": 0.7126436781609196,
+    "twin_agreement": 0.87,
+    "twin_false_confidence": 0.12,
+    "two_step_share": 0.185,
+    "sims": 1.26
+   },
+   "damping -1": {
+    "label": "damping -1",
+    "n": 200,
+    "clean": 0.855,
+    "occupied_spot": 0.7126436781609196,
+    "twin_agreement": 0.87,
+    "twin_false_confidence": 0.12,
+    "two_step_share": 0.17,
+    "sims": 1.25
+   }
+  }
+ },
+ "config": {
+  "regime": "cluttered",
+  "n_layouts": 10,
+  "per_layout": 5,
+  "seeds": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "nominal_magnitude": 0.2198631932198959
+ }
+}

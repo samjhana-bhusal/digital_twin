@@ -1,0 +1,67 @@
+
+[open]  150 episodes over 25 layouts in 25.0s  (167 ms each)
+CLEAN SUCCESS : 124/150  (82.7%)   goal reached and nothing else disturbed
+  goal reached: 124/150  (82.7%)
+  of those, 0 disturbed a protected object (>30 mm)
+
+  by reference kind:
+    extreme-to-landmark      41/49     83.7%
+    colour                   33/40     82.5%
+    superlative              30/35     85.7%
+    side-of-object           18/21     85.7%
+    side-of-landmark          2/5      40.0%
+
+  by goal kind:
+    at-occupied-spot         32/55     58.2%
+    next-to                  41/43     95.3%
+    to-side                  28/28    100.0%
+    on-pad                   19/19    100.0%
+    away-from                 4/5      80.0%
+  collateral on goal-reached episodes: median 0.0 mm, p95 0.0 mm
+
+  failure reasons:
+      14  placed
+       9  placed_off_target
+       3  dropped_in_transit
+
+  skill/task disagreement: 14/150
+      14  skill ok, task failed
+      e.g. [placed] Put the cube to the left of the blue cube where the red cube is.
+      e.g. [placed] Put the rightmost cube where the yellow cube is.
+      e.g. [placed] Put the cube nearest the pipe where the red cube is.
+      e.g. [placed] Put the leftmost cube where the yellow cube is.
+
+[cluttered]  150 episodes over 25 layouts in 33.9s  (226 ms each)
+CLEAN SUCCESS : 113/150  (75.3%)   goal reached and nothing else disturbed
+  goal reached: 116/150  (77.3%)
+  of those, 3 disturbed a protected object (>30 mm)
+
+  by reference kind:
+    colour                   49/72     68.1%
+    superlative              27/31     87.1%
+    extreme-to-landmark      17/24     70.8%
+    side-of-object           15/16     93.8%
+    side-of-landmark          5/7      71.4%
+
+  by goal kind:
+    at-occupied-spot         29/60     48.3%
+    next-to                  46/49     93.9%
+    to-side                  16/18     88.9%
+    on-pad                   13/14     92.9%
+    away-from                 9/9     100.0%
+  collateral on goal-reached episodes: median 0.0 mm, p95 21.3 mm
+
+  failure reasons:
+      15  placed_off_target
+      13  placed
+       5  dropped_in_transit
+       4  lost_on_lift
+
+  skill/task disagreement: 13/150
+      13  skill ok, task failed
+      e.g. [placed] Put the yellow cube on the green pad.
+      e.g. [placed] Put the rightmost cube where the teal cube is.
+      e.g. [placed] Move the cube to the left of the red cube to the right side of the table.
+      e.g. [placed] Put the blue cube where the teal cube is.
+
+wrote /Users/s/Documents/k/oregon/results/s2_benchmark.json

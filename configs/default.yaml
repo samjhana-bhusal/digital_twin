@@ -1,0 +1,36 @@
+# fieldtwin experiment configuration.
+# Anything that changes a number in a result lives here, not in a script.
+
+scene: fieldtwin/models/scene.xml
+
+# The bus the PLANT runs. This is "the hardware we are stuck with".
+plant_bus:
+  control_hz: 50.0
+  act_latency_s: 0.012
+  act_jitter_s: 0.004
+  dropout_p: 0.01
+  encoder_bits: 12
+  sense_latency_s: 0.004
+  seed: 7
+
+dataset:
+  n_push: 40
+  n_free: 10
+  n_steps: 120
+  seed: 1
+
+identify:
+  # finite-difference step in LOG parameter space
+  fd_eps: 1.0e-3
+  # eigenvalue cutoff, relative to the largest, below which a direction counts
+  # as unidentifiable
+  flat_rel_tol: 1.0e-3
+  # whiten residuals with the realistic sensor noise even when studying clean
+  # dynamics -- otherwise identifiability looks better than any real rig's
+  whiten_with_realistic_noise: true
+
+twin:
+  # relative log-normal spread used to generate mis-specified twins
+  rel_sigma: 0.25
+  n_twins: 32
+  seed: 3

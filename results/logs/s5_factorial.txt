@@ -1,0 +1,27 @@
+
+=== FACTORIAL (cluttered) — physics x orientation ===
+  direct (no twin)                   clean  79.3%  occupied  55.6%  twin-agree   nan%  false-conf  0.0%  2-step  0.0%
+  exact physics, yaw unseen          clean  85.3%  occupied  68.5%  twin-agree  86.7%  false-conf 12.7%  2-step 17.0%
+  exact physics, yaw known           clean  90.7%  occupied  81.5%  twin-agree  93.0%  false-conf  6.3%  2-step 18.7%
+  mis-specified, yaw unseen          clean  90.3%  occupied  80.6%  twin-agree  91.3%  false-conf  7.3%  2-step 19.7%
+  mis-specified, yaw known           clean  90.3%  occupied  79.8%  twin-agree  94.0%  false-conf  5.7%  2-step 18.3%
+
+  paired comparisons:
+
+  PAIRED  direct (no twin) vs exact physics, yaw unseen  (300 shared episodes)
+    both clean 236   both failed 42
+    direct (no twin) rescued 2   direct (no twin) broke 20   net -18   McNemar p = 0.00012
+
+  PAIRED  exact physics, yaw known vs exact physics, yaw unseen  (300 shared episodes)
+    both clean 249   both failed 21
+    exact physics, yaw known rescued 23   exact physics, yaw known broke 7   net +16   McNemar p = 0.0052
+
+  PAIRED  mis-specified, yaw unseen vs exact physics, yaw unseen  (300 shared episodes)
+    both clean 255   both failed 28
+    mis-specified, yaw unseen rescued 16   mis-specified, yaw unseen broke 1   net +15   McNemar p = 0.00027
+
+  PAIRED  mis-specified, yaw known vs exact physics, yaw unseen  (300 shared episodes)
+    both clean 246   both failed 19
+    mis-specified, yaw known rescued 25   mis-specified, yaw known broke 10   net +15   McNemar p = 0.017
+
+wrote /Users/s/Documents/k/oregon/results/s5_factorial.json

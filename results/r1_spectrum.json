@@ -1,0 +1,75 @@
+{
+  "eigvals": [
+    0.0,
+    178169926.59405488,
+    250905939.92557126,
+    296064672.6678374,
+    298636567.7297663,
+    370165863.2681362,
+    2746365016.642622,
+    4831537039.858253,
+    7114474754.484447,
+    9541021871.730614,
+    12805649210.923956,
+    41800167897.92908,
+    74958054897.64113,
+    99484813742.97406,
+    537857665601.0141,
+    1003421092303.7349,
+    1350889467433.9421,
+    67066353113781.22
+  ],
+  "param_names": [
+    "m_link1",
+    "m_link2",
+    "m_link3",
+    "d_j1",
+    "d_j2",
+    "d_j3",
+    "f_j1",
+    "f_j2",
+    "f_j3",
+    "kp_a1",
+    "kp_a2",
+    "kp_a3",
+    "m_box",
+    "f_bx",
+    "f_by",
+    "f_bt",
+    "mu_box",
+    "mu_tip"
+  ],
+  "effective_rank": 6,
+  "null_dimension": 1,
+  "stiff_condition_number": 894.718428931535,
+  "flat_fraction_mean": 0.7825238041713496,
+  "flat_fraction_std": 0.11871161318551478,
+  "config": {
+    "scene": "fieldtwin/models/scene.xml",
+    "plant_bus": {
+      "control_hz": 50.0,
+      "act_latency_s": 0.012,
+      "act_jitter_s": 0.004,
+      "dropout_p": 0.01,
+      "encoder_bits": 12,
+      "sense_latency_s": 0.004,
+      "seed": 7
+    },
+    "dataset": {
+      "n_push": 40,
+      "n_free": 10,
+      "n_steps": 120,
+      "seed": 1
+    },
+    "identify": {
+      "fd_eps": 0.001,
+      "flat_rel_tol": 0.001,
+      "whiten_with_realistic_noise": true
+    },
+    "twin": {
+      "rel_sigma": 0.25,
+      "n_twins": 32,
+      "seed": 3
+    }
+  }
+}

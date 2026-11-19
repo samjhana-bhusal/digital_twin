@@ -1,0 +1,10 @@
+
+=== DIRECTIONS (cluttered) — which parameter carries the effect ===
+  mass +1                            clean  88.5%  occupied  78.2%  twin-agree  92.0%  false-conf  7.5%  2-step 24.0%
+  mass -1                            clean  84.5%  occupied  69.0%  twin-agree  86.5%  false-conf 13.5%  2-step 16.0%
+  friction +1                        clean  86.5%  occupied  73.6%  twin-agree  86.5%  false-conf 12.0%  2-step 23.5%
+  friction -1                        clean  83.5%  occupied  66.7%  twin-agree  85.5%  false-conf 14.0%  2-step 19.5%
+  damping +1                         clean  85.5%  occupied  71.3%  twin-agree  87.0%  false-conf 12.0%  2-step 18.5%
+  damping -1                         clean  85.5%  occupied  71.3%  twin-agree  87.0%  false-conf 12.0%  2-step 17.0%
+
+wrote /Users/s/Documents/k/oregon/results/s5_directions.json

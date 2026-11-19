@@ -1,0 +1,17 @@
+
+=== FIXED PLAN (cluttered) — accuracy without plan selection ===
+  every twin predicts the SAME one-step plan; the plant then runs it
+
+  300 episodes, the fixed plan succeeded 79.3% of the time
+
+   -3.0x nominal   agrees  83.3%   said-clean-but-no  13.0%   said-no-but-clean   3.7%   predicts clean  88.7%
+   -2.0x nominal   agrees  84.0%   said-clean-but-no  10.3%   said-no-but-clean   5.7%   predicts clean  84.0%
+   -1.0x nominal   agrees  81.0%   said-clean-but-no   9.0%   said-no-but-clean  10.0%   predicts clean  78.3%
+   -0.5x nominal   agrees  79.0%   said-clean-but-no  10.7%   said-no-but-clean  10.3%   predicts clean  79.7%
+   +0.0x nominal   agrees  78.0%   said-clean-but-no  12.0%   said-no-but-clean  10.0%   predicts clean  81.3%
+   +0.5x nominal   agrees  77.3%   said-clean-but-no  10.3%   said-no-but-clean  12.3%   predicts clean  77.3%
+   +1.0x nominal   agrees  84.0%   said-clean-but-no   7.0%   said-no-but-clean   9.0%   predicts clean  77.3%
+   +2.0x nominal   agrees  84.7%   said-clean-but-no   7.7%   said-no-but-clean   7.7%   predicts clean  79.3%
+   +3.0x nominal   agrees  81.3%   said-clean-but-no   7.3%   said-no-but-clean  11.3%   predicts clean  75.3%
+
+wrote /Users/s/Documents/k/oregon/results/s5_fixedplan.json

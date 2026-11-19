@@ -1,0 +1,192 @@
+{
+ "sweep": {
+  "stats": {
+   "-3.0x nominal": {
+    "label": "-3.0x nominal",
+    "n": 300,
+    "clean": 0.8433333333333334,
+    "occupied_spot": 0.6612903225806451,
+    "twin_agreement": 0.8633333333333333,
+    "twin_false_confidence": 0.13666666666666666,
+    "two_step_share": 0.09333333333333334,
+    "sims": 1.1333333333333333,
+    "k": -3.0,
+    "log_error": 0.6595895796596877
+   },
+   "-2.0x nominal": {
+    "label": "-2.0x nominal",
+    "n": 300,
+    "clean": 0.8666666666666667,
+    "occupied_spot": 0.717741935483871,
+    "twin_agreement": 0.89,
+    "twin_false_confidence": 0.11,
+    "two_step_share": 0.14,
+    "sims": 1.1866666666666668,
+    "k": -2.0,
+    "log_error": 0.4397263864397918
+   },
+   "-1.0x nominal": {
+    "label": "-1.0x nominal",
+    "n": 300,
+    "clean": 0.8833333333333333,
+    "occupied_spot": 0.7580645161290323,
+    "twin_agreement": 0.8966666666666666,
+    "twin_false_confidence": 0.09333333333333334,
+    "two_step_share": 0.2,
+    "sims": 1.2566666666666666,
+    "k": -1.0,
+    "log_error": 0.2198631932198959
+   },
+   "-0.5x nominal": {
+    "label": "-0.5x nominal",
+    "n": 300,
+    "clean": 0.8733333333333333,
+    "occupied_spot": 0.7338709677419355,
+    "twin_agreement": 0.87,
+    "twin_false_confidence": 0.11,
+    "two_step_share": 0.17,
+    "sims": 1.2566666666666666,
+    "k": -0.5,
+    "log_error": 0.10993159660994795
+   },
+   "+0.0x nominal": {
+    "label": "+0.0x nominal",
+    "n": 300,
+    "clean": 0.8533333333333334,
+    "occupied_spot": 0.6854838709677419,
+    "twin_agreement": 0.8666666666666667,
+    "twin_false_confidence": 0.12666666666666668,
+    "two_step_share": 0.17,
+    "sims": 1.2333333333333334,
+    "k": 0.0,
+    "log_error": 0.0
+   },
+   "+0.5x nominal": {
+    "label": "+0.5x nominal",
+    "n": 300,
+    "clean": 0.87,
+    "occupied_spot": 0.7258064516129032,
+    "twin_agreement": 0.8833333333333333,
+    "twin_false_confidence": 0.10666666666666667,
+    "two_step_share": 0.19666666666666666,
+    "sims": 1.2733333333333334,
+    "k": 0.5,
+    "log_error": 0.10993159660994795
+   },
+   "+1.0x nominal": {
+    "label": "+1.0x nominal",
+    "n": 300,
+    "clean": 0.9033333333333333,
+    "occupied_spot": 0.8064516129032258,
+    "twin_agreement": 0.9133333333333333,
+    "twin_false_confidence": 0.07333333333333333,
+    "two_step_share": 0.19666666666666666,
+    "sims": 1.2833333333333334,
+    "k": 1.0,
+    "log_error": 0.2198631932198959
+   },
+   "+2.0x nominal": {
+    "label": "+2.0x nominal",
+    "n": 300,
+    "clean": 0.89,
+    "occupied_spot": 0.7741935483870968,
+    "twin_agreement": 0.9166666666666666,
+    "twin_false_confidence": 0.07666666666666666,
+    "two_step_share": 0.17666666666666667,
+    "sims": 1.2666666666666666,
+    "k": 2.0,
+    "log_error": 0.4397263864397918
+   },
+   "+3.0x nominal": {
+    "label": "+3.0x nominal",
+    "n": 300,
+    "clean": 0.9,
+    "occupied_spot": 0.782258064516129,
+    "twin_agreement": 0.92,
+    "twin_false_confidence": 0.07333333333333333,
+    "two_step_share": 0.21333333333333335,
+    "sims": 1.3133333333333332,
+    "k": 3.0,
+    "log_error": 0.6595895796596877
+   }
+  },
+  "paired": {
+   "-3.0x nominal": {
+    "n": 300,
+    "rescued": 8,
+    "broke": 11,
+    "both_ok": 245,
+    "both_failed": 36,
+    "p": 0.6476058959960938
+   },
+   "-2.0x nominal": {
+    "n": 300,
+    "rescued": 11,
+    "broke": 7,
+    "both_ok": 249,
+    "both_failed": 33,
+    "p": 0.480682373046875
+   },
+   "-1.0x nominal": {
+    "n": 300,
+    "rescued": 14,
+    "broke": 5,
+    "both_ok": 251,
+    "both_failed": 30,
+    "p": 0.063568115234375
+   },
+   "-0.5x nominal": {
+    "n": 300,
+    "rescued": 9,
+    "broke": 3,
+    "both_ok": 253,
+    "both_failed": 35,
+    "p": 0.14599609375
+   },
+   "+0.5x nominal": {
+    "n": 300,
+    "rescued": 8,
+    "broke": 3,
+    "both_ok": 253,
+    "both_failed": 36,
+    "p": 0.2265625
+   },
+   "+1.0x nominal": {
+    "n": 300,
+    "rescued": 16,
+    "broke": 1,
+    "both_ok": 255,
+    "both_failed": 28,
+    "p": 0.000274658203125
+   },
+   "+2.0x nominal": {
+    "n": 300,
+    "rescued": 18,
+    "broke": 7,
+    "both_ok": 249,
+    "both_failed": 26,
+    "p": 0.043285250663757324
+   },
+   "+3.0x nominal": {
+    "n": 300,
+    "rescued": 23,
+    "broke": 9,
+    "both_ok": 247,
+    "both_failed": 21,
+    "p": 0.020061607006937265
+   }
+  }
+ },
+ "config": {
+  "regime": "cluttered",
+  "n_layouts": 15,
+  "per_layout": 5,
+  "seeds": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "nominal_magnitude": 0.2198631932198959
+ }
+}

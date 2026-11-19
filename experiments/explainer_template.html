@@ -1,0 +1,501 @@
+<title>Inside fieldtwin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a lab notebook read top to bottom - each section is one figure and
+   the tight caption that explains what it shows. Numbers always set in mono. */
+:root{
+  --bg:#f4f6f7; --surface:#ffffff; --surface-2:#eceff2;
+  --ink:#0f1419; --ink-2:#4a5663; --ink-3:#78848f;
+  --line:#dde3e8; --line-2:#c8d1d9;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --good:#008300; --warn:#eda100; --bad:#e34948;
+  --font-sans:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1116; --surface:#161b21; --surface-2:#1e242c;
+  --ink:#eef1f4; --ink-2:#a6b2be; --ink-3:#6f7d8a;
+  --line:#242c35; --line-2:#323c47;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --good:#0ca30c; --warn:#c98500; --bad:#e66767;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0e1116; --surface:#161b21; --surface-2:#1e242c;
+  --ink:#eef1f4; --ink-2:#a6b2be; --ink-3:#6f7d8a;
+  --line:#242c35; --line-2:#323c47;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --good:#0ca30c; --warn:#c98500; --bad:#e66767;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-sans);line-height:1.55;margin:0}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 72px}
+h1,h2,h3{text-wrap:balance;margin:0}
+h1{font-size:clamp(1.9rem,5vw,2.9rem);font-weight:700;letter-spacing:-.025em;line-height:1.1}
+h2{font-size:clamp(1.25rem,3vw,1.6rem);font-weight:600;letter-spacing:-.015em}
+h3{font-size:.95rem;font-weight:600}
+p{margin:0;max-width:68ch}
+a{color:var(--s1)}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.lede{font-size:1.08rem;color:var(--ink-2)}
+.muted{color:var(--ink-2)}
+.small{font-size:.86rem}
+header{padding-block:56px 36px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:18px}
+section{padding-block:44px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:18px}
+section:last-of-type{border-bottom:0}
+figure{margin:0;display:flex;flex-direction:column;gap:10px}
+figcaption{font-size:.86rem;color:var(--ink-2);max-width:68ch}
+img{max-width:100%;display:block;border-radius:6px;border:1px solid var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
+/* status strip */
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.strip div{background:var(--surface);padding:11px 13px;min-width:0}
+.strip .k{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.strip .v{font-family:var(--font-mono);font-size:1.22rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3}
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:.83rem}
+.legend span{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)}
+.sw{width:13px;height:3px;border-radius:2px;flex:none}
+.sw.dot{width:10px;height:10px;border-radius:50%}
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font-family:var(--font-sans);font-size:.83rem;font-weight:500;color:var(--ink);background:var(--surface);
+  border:1px solid var(--line-2);border-radius:6px;padding:7px 12px;cursor:pointer}
+button:hover{background:var(--surface-2)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+input[type=range]{flex:1;min-width:160px;accent-color:var(--s1)}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px}
+canvas{width:100%;height:auto;display:block;touch-action:none}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px}
+.readout div{background:var(--surface-2);border-radius:6px;padding:9px 11px;min-width:0}
+.readout .k{font-family:var(--font-mono);font-size:.64rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.readout .v{font-family:var(--font-mono);font-size:1.05rem;font-weight:600;font-variant-numeric:tabular-nums}
+/* tables */
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:460px}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line)}
+th{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+td.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right}
+tbody tr:last-child td{border-bottom:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.pill{display:inline-block;font-family:var(--font-mono);font-size:.68rem;letter-spacing:.06em;padding:3px 8px;border-radius:999px;border:1px solid currentColor}
+.pill.ok{color:var(--good)}.pill.no{color:var(--bad)}.pill.wip{color:var(--warn)}
+ul{margin:0;padding-left:1.1em;max-width:68ch}
+li{margin-block:4px}
+li::marker{color:var(--ink-3)}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.q{border-left:3px solid var(--s2);padding:10px 0 10px 15px;max-width:68ch}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">A walkthrough of what got built</div>
+  <h1>One arm, two worlds, one&nbsp;question</h1>
+  <p class="lede">A digital twin is normally reported as a success and a sim-to-real gap as a single number. Neither tells you anything useful. <strong>fieldtwin</strong> measures the part that matters: a twin is wrong in particular directions, and only some of them change what the robot does.</p>
+  <div class="strip" id="strip"></div>
+</header>
+
+<section>
+  <div class="eyebrow">1 — the setup</div>
+  <h2>A robot arm pushing a block</h2>
+  <p class="muted">Everything happens in this scene. A 3-link arm pushes a block across a table. There is a pipe and a bolt in the scene so that later, when a vision-language model is asked to find something, it has to pick the right object instead of the only object.</p>
+  <figure>
+    <img src="scene_oblique.png" alt="3D render: a three-link robot arm with an orange fingertip beside a red block, with a grey pipe, a small bolt and a green target zone on a checkered table." width="520" height="340">
+    <figcaption>The actual simulated scene, rendered from MuJoCo. The arm is 43&nbsp;cm fully extended. Only the orange fingertip can collide with anything — the links are visual, so every contact in a run is one we meant to happen.</figcaption>
+  </figure>
+  <p class="muted small">The whole world is <strong class="mono">6</strong> numbers: three joint angles, plus the block's x, y and rotation. That is small enough to simulate thousands of times on a laptop, which is the entire reason the project is feasible in three months without a GPU.</p>
+</section>
+
+<section>
+  <div class="eyebrow">2 — the idea</div>
+  <h2>The plant and the twin</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="color:var(--s1)">The plant</h3>
+      <p class="small muted" style="margin-top:6px">The ground truth. The only thing allowed to be called reality. You never touch it directly — every command goes through a simulated servo bus that is late, jittery and occasionally drops a packet, exactly like real hardware.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--s2)">The twin</h3>
+      <p class="small muted" style="margin-top:6px">What you get after trying to identify the plant's parameters from logged data. It shares the <em>same</em> scene file, so the only possible difference is the 18 numbers describing mass, friction, damping and servo gain.</p>
+    </div>
+  </div>
+  <p class="muted">Because the plant is simulated too, its true parameters are known. That means every claim about the gap can itself be checked — which a real robot never allows. That is the reason to do this in simulation, not an apology for it.</p>
+  <figure>
+    <img src="three_worlds.gif" alt="Animation of three side-by-side renders of the same push: the plant, a twin with error in an identifiable direction which visibly diverges, and a twin with error in an unidentifiable direction which moves identically to the plant." width="780" height="169">
+    <figcaption>The same commands sent to three worlds. Both twins are wrong by <strong class="mono">+57%</strong> along one direction in parameter space. The middle one drifts away from the plant. The right one is indistinguishable from it. That difference is the whole project.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="eyebrow">3 — the same run, side by side</div>
+  <h2>Watch them come apart</h2>
+  <p class="muted">Top-down view, drawn from the real logged trajectories. Scrub the timeline or press play. The two twins carry parameter errors of identical size — one in a direction the data can pin down, one in a direction it cannot.</p>
+  <div class="controls">
+    <button id="play" aria-pressed="false">Play</button>
+    <input type="range" id="scrub" min="0" max="109" value="0" step="1" aria-label="Timeline position">
+    <span class="mono small muted" id="tlabel">t = 0.00 s</span>
+  </div>
+  <div class="controls" role="group" aria-label="Which task to show">
+    <span class="eyebrow" style="margin-right:4px">Task</span>
+    <button class="task" data-task="familiar" aria-pressed="true">Like the training data</button>
+    <button class="task" data-task="novel" aria-pressed="false">A different push</button>
+  </div>
+  <div class="stage">
+    <canvas id="cv" width="1300" height="760" role="img" aria-label="Top-down animation of the arm pushing the block in three parallel worlds"></canvas>
+    <div class="legend" style="margin-top:10px">
+      <span><i class="sw" style="background:var(--s1)"></i>Plant (truth)</span>
+      <span><i class="sw" style="background:var(--s2)"></i>Twin — identifiable error</span>
+      <span><i class="sw" style="background:var(--s3)"></i>Twin — unidentifiable error</span>
+      <span><i class="sw dot" style="background:var(--ink-3)"></i>Pipe / bolt / target</span>
+    </div>
+    <div class="readout">
+      <div><div class="k">Block error — identifiable</div><div class="v" id="e_stiff" style="color:var(--s2)">—</div></div>
+      <div><div class="k">Block error — unidentifiable</div><div class="v" id="e_flat" style="color:var(--s3)">—</div></div>
+    </div>
+  </div>
+  <figcaption class="small">Block error is the distance between that twin's block and the plant's block at the current instant.</figcaption>
+</section>
+
+<section>
+  <div class="eyebrow">4 — the interface</div>
+  <h2>The wire is part of the physics</h2>
+  <p class="muted">On real hardware you never command a joint, you command a bus. It applies your setpoint about <span class="mono" id="lat">12</span>&nbsp;ms late, with jitter, sometimes loses a packet entirely, and reports position back on a finite grid. All of that arrives in your data looking like dynamics.</p>
+  <div class="grid2">
+    <figure>
+      <div class="card"><svg id="busfig" viewBox="0 0 440 210" aria-label="Chart comparing the commanded joint setpoint with the setpoint the servo was actually holding"></svg></div>
+      <figcaption>What was commanded against what the servo was actually holding. The steps are the 50&nbsp;Hz control rate; the shift between them is latency.</figcaption>
+    </figure>
+    <figure>
+      <div class="card"><svg id="encfig" viewBox="0 0 440 210" aria-label="Chart comparing true joint angle with the quantised encoder reading"></svg></div>
+      <figcaption>The encoder staircase. True angle against what a 12-bit encoder reports — one step is <span class="mono" id="lsb">—</span>.</figcaption>
+    </figure>
+  </div>
+  <div class="q"><p><strong>Already a result.</strong> With this bus running, a twin holding the plant's <em>exactly correct</em> parameters still cannot match the data better than <strong class="mono">7.9×</strong> the sensor noise. Before a single parameter is mis-fitted, the interface alone sets the floor.</p></div>
+</section>
+
+<section>
+  <div class="eyebrow">5 — identifiability</div>
+  <h2>What the data cannot tell you</h2>
+  <p class="muted">Fit the 18 parameters to logged data and look at the curvature of that fit. Directions with steep curvature are pinned down by the data. Flat directions are not — you could be badly wrong along them and the data would look the same.</p>
+  <div class="controls" role="group" aria-label="Which identification dataset">
+    <span class="eyebrow" style="margin-right:4px">Identification set</span>
+    <button class="spec" data-spec="push_only" aria-pressed="true">30 pushes</button>
+    <button class="spec" data-spec="mixed" aria-pressed="false">30 pushes + 8 free sweeps</button>
+  </div>
+  <figure>
+    <div class="card"><svg id="specfig" viewBox="0 0 440 290" aria-label="Bar chart of the eighteen curvature eigenvalues, each labelled by its dominant parameter"></svg></div>
+    <figcaption id="speccap">Each bar is one direction in parameter space, labelled by the parameter that dominates it.</figcaption>
+  </figure>
+  <div class="q"><p><strong>One direction is exactly flat, for a reason worth knowing.</strong> MuJoCo combines contact friction by taking the larger of the two surfaces. The fingertip's friction (<span class="mono">0.45</span>) sits below the block's (<span class="mono">0.50</span>), so it has <em>no effect whatsoever</em>. Not "hard to measure" — provably invisible. No amount of extra robot time would fix it, because the fix is in the contact model, not the data.</p></div>
+</section>
+
+<section>
+  <div class="eyebrow">6 — what the walkthrough turned up</div>
+  <h2>Adding more data made the answer worse</h2>
+  <p class="muted">Building this page surfaced something the first run had hidden. Free-space sweeps, with the block parked away, identify the arm parameters extremely sharply. That inflates the largest eigenvalue by orders of magnitude — and because "flat" was defined <em>relative</em> to the largest, every contact parameter then falls below the line and gets labelled unidentifiable, despite the pushes constraining it perfectly well.</p>
+  <div class="tw"><table>
+    <caption class="small muted" style="text-align:left;padding-bottom:9px">Same model, same noise, same 57% parameter error — only the identification set differs.</caption>
+    <thead><tr><th>Identification set</th><th class="num">Effective rank</th><th class="num">Error in a steep direction</th><th class="num">Error in a flat direction</th></tr></thead>
+    <tbody id="f5tbl"></tbody>
+  </table></div>
+  <figure>
+    <div class="card"><svg id="sweepfig" viewBox="0 0 440 230" aria-label="Chart of divergence against perturbation size for steep and flat directions on the mixed dataset"></svg></div>
+    <figcaption>On the mixed set the labels are inverted at every size, including the smallest. So this is not the local approximation breaking down at large errors — the classification itself is wrong.</figcaption>
+  </figure>
+  <div class="q"><p><strong>This sharpens the project rather than breaking it.</strong> Identifiability is a property of the model, the dataset <em>and</em> the noise assumptions together. A direction that is flat for your fitting loss can be exactly the direction your task is most sensitive to, because the loss is averaged over whatever episodes you happened to collect and the task is not. Two concrete consequences: the relative cutoff has to be replaced with one referenced to sensor noise, and the stiff/flat split has to be computed against a task-weighted metric.</p></div>
+</section>
+
+<section>
+  <div class="eyebrow">7 — status</div>
+  <h2>Where it stands</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Component</th><th>State</th><th>When</th></tr></thead>
+    <tbody>
+      <tr><td>Scene, 18 parameters, servo bus, rollouts, logging</td><td><span class="pill ok">working</span></td><td class="mono small">weeks 1–2</td></tr>
+      <tr><td>Identification loss + curvature spectrum</td><td><span class="pill ok">working</span></td><td class="mono small">weeks 1–2</td></tr>
+      <tr><td>Parameter recovery, noise-referenced cutoff, data-budget sweep</td><td><span class="pill wip">next</span></td><td class="mono small">weeks 3–5</td></tr>
+      <tr><td>Interface vs. dynamics ablation</td><td><span class="pill wip">next</span></td><td class="mono small">weeks 5–6</td></tr>
+      <tr><td>Learned world model, crossover horizon</td><td><span class="pill no">not started</span></td><td class="mono small">weeks 6–8</td></tr>
+      <tr><td>VLM grounding under field degradation</td><td><span class="pill no">not started</span></td><td class="mono small">weeks 9–10</td></tr>
+      <tr><td>Error budget and writeup</td><td><span class="pill no">not started</span></td><td class="mono small">weeks 11–12</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">Every figure on this page is generated by <span class="mono">experiments/make_visuals.py</span> from the simulator. Nothing here is drawn by hand or estimated.</p>
+</section>
+</div>
+
+<script type="application/json" id="D">__DATA__</script>
+<script>
+(function(){
+"use strict";
+const D = JSON.parse(document.getElementById("D").textContent);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = (v,d=2) => v.toFixed(d);
+
+/* ---------------- status strip ---------------- */
+const sp = D.spectra.push_only;
+document.getElementById("strip").innerHTML = [
+  ["Parameters", D.param_names.length],
+  ["State dims", 6],
+  ["Twin error", "+" + Math.round(D.perturbations.pct) + "%"],
+  ["Unidentifiable", sp.null + " of " + D.param_names.length],
+  ["Noise floor", "7.9×"],
+].map(([k,v]) => `<div><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+document.getElementById("lat").textContent = Math.round(D.bus_cfg.act_latency_s*1000);
+document.getElementById("lsb").textContent = (D.bus_demo.encoder_lsb*1000).toFixed(2) + " mrad";
+
+/* ---------------- canvas replay ---------------- */
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const G = D.geometry, L = G.links;
+const VX = [-0.12, 0.52], VY = [-0.26, 0.30];
+const WORLDS = [["plant","--s1"],["twin_stiff","--s2"],["twin_flat","--s3"]];
+let task = "familiar", frame = 0, playing = false, raf = null;
+const nFrames = () => D.runs[task].plant.t.length;
+
+function fit(){
+  const r = cv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio||1, 2);
+  cv.width = Math.max(320, Math.round(r.width*dpr));
+  cv.height = Math.round(cv.width * (VY[1]-VY[0])/(VX[1]-VX[0]));
+  draw();
+}
+const sx = () => cv.width/(VX[1]-VX[0]);
+const X = x => (x - VX[0])*sx();
+const Y = y => cv.height - (y - VY[0])*sx();
+
+function armPts(q){
+  let a = 0, p = [[0,0]], x = 0, y = 0;
+  for(let i=0;i<3;i++){ a += q[i]; x += L[i]*Math.cos(a); y += L[i]*Math.sin(a); p.push([x,y]); }
+  return p;
+}
+function boxPoly(b){
+  const h = G.box_half, cx = G.box_home[0]+b[0], cy = G.box_home[1]+b[1], t = b[2];
+  return [[-h,-h],[h,-h],[h,h],[-h,h]].map(([u,v]) =>
+    [cx + u*Math.cos(t) - v*Math.sin(t), cy + u*Math.sin(t) + v*Math.cos(t)]);
+}
+function circle(c,r,fill,stroke,w){
+  ctx.beginPath(); ctx.arc(X(c[0]),Y(c[1]),r*sx(),0,6.2832);
+  if(fill){ctx.fillStyle=fill;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=w||2;ctx.stroke();}
+}
+function draw(){
+  const S = sx(), k = cv.width/1300;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle = css("--surface"); ctx.fillRect(0,0,cv.width,cv.height);
+  // table grid
+  ctx.strokeStyle = css("--line"); ctx.lineWidth = 1;
+  for(let gx=-0.1; gx<=0.55; gx+=0.1){ ctx.beginPath(); ctx.moveTo(X(gx),0); ctx.lineTo(X(gx),cv.height); ctx.stroke(); }
+  for(let gy=-0.3; gy<=0.35; gy+=0.1){ ctx.beginPath(); ctx.moveTo(0,Y(gy)); ctx.lineTo(cv.width,Y(gy)); ctx.stroke(); }
+  // furniture
+  circle(G.target.xy, G.target.r, "transparent", css("--good"), 2*k);
+  circle(G.pipe.xy, G.pipe.r, css("--line-2"), css("--ink-3"), 1.5*k);
+  circle(G.bolt.xy, G.bolt.r, css("--ink-3"), null, 0);
+  ctx.fillStyle = css("--ink-3"); ctx.font = `${13*k}px ${css("--font-mono")||"monospace"}`;
+  ctx.fillText("pipe", X(G.pipe.xy[0])+G.pipe.r*S+6*k, Y(G.pipe.xy[1])+4*k);
+  ctx.fillText("bolt", X(G.bolt.xy[0])+G.bolt.r*S+6*k, Y(G.bolt.xy[1])+4*k);
+  ctx.fillStyle = css("--good"); ctx.fillText("target", X(G.target.xy[0])+G.target.r*S+6*k, Y(G.target.xy[1])+4*k);
+
+  const f = Math.min(frame, nFrames()-1);
+  for(const [name,tok] of WORLDS){
+    if(!shown[name]) continue;
+    const r = D.runs[task][name], col = css(tok);
+    // block trail
+    ctx.strokeStyle = col; ctx.globalAlpha = .3; ctx.lineWidth = 2*k; ctx.beginPath();
+    for(let i=0;i<=f;i++){ const c=[G.box_home[0]+r.box[i][0],G.box_home[1]+r.box[i][1]];
+      i?ctx.lineTo(X(c[0]),Y(c[1])):ctx.moveTo(X(c[0]),Y(c[1])); }
+    ctx.stroke(); ctx.globalAlpha = 1;
+    // block
+    const poly = boxPoly(r.box[f]);
+    ctx.beginPath(); poly.forEach((p,i)=> i?ctx.lineTo(X(p[0]),Y(p[1])):ctx.moveTo(X(p[0]),Y(p[1]))); ctx.closePath();
+    ctx.fillStyle = col; ctx.globalAlpha = name==="plant"?.26:.13; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = col; ctx.lineWidth = (name==="plant"?3:2)*k; ctx.stroke();
+    // arm
+    const pts = armPts(r.q[f]);
+    ctx.strokeStyle = col; ctx.lineWidth = (name==="plant"?7:4)*k;
+    ctx.lineCap="round"; ctx.lineJoin="round"; ctx.globalAlpha = name==="plant"?.95:.6;
+    ctx.beginPath(); pts.forEach((p,i)=> i?ctx.lineTo(X(p[0]),Y(p[1])):ctx.moveTo(X(p[0]),Y(p[1]))); ctx.stroke();
+    ctx.globalAlpha = 1;
+    circle(pts[3], G.tip_r, col, null, 0);
+  }
+  // readouts
+  const ref = D.runs[task].plant.box[f];
+  for(const [name,id] of [["twin_stiff","e_stiff"],["twin_flat","e_flat"]]){
+    const b = D.runs[task][name].box[f];
+    const mm = Math.hypot(b[0]-ref[0], b[1]-ref[1])*1000;
+    document.getElementById(id).textContent = (mm < 0.005 ? "0.00" : fmt(mm,2)) + " mm";
+  }
+  document.getElementById("tlabel").textContent = "t = " + fmt(D.runs[task].plant.t[f],2) + " s";
+}
+const shown = {plant:true, twin_stiff:true, twin_flat:true};
+const scrub = document.getElementById("scrub"), playBtn = document.getElementById("play");
+scrub.addEventListener("input", e => { frame = +e.target.value; stop(); draw(); });
+function stop(){ playing=false; playBtn.textContent="Play"; playBtn.setAttribute("aria-pressed","false"); if(raf) cancelAnimationFrame(raf); raf=null; }
+function tick(){ if(!playing) return; frame = (frame+1) % nFrames(); scrub.value = frame; draw(); raf = requestAnimationFrame(()=>setTimeout(tick,45)); }
+playBtn.addEventListener("click", () => {
+  playing = !playing;
+  playBtn.textContent = playing ? "Pause" : "Play";
+  playBtn.setAttribute("aria-pressed", String(playing));
+  if(playing){ if(frame >= nFrames()-1) frame = 0; tick(); } else stop();
+});
+document.querySelectorAll(".task").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".task").forEach(o => o.setAttribute("aria-pressed", String(o===b)));
+  task = b.dataset.task; frame = 0; scrub.value = 0; scrub.max = nFrames()-1; stop(); draw();
+}));
+
+/* ---------------- small SVG chart helpers ---------------- */
+const NS = "http://www.w3.org/2000/svg";
+function el(n, a){ const e = document.createElementNS(NS,n); for(const k in a) e.setAttribute(k,a[k]); return e; }
+function axes(svg, box, xl, yl){
+  const g = el("g",{});
+  g.appendChild(el("line",{x1:box.l,y1:box.b,x2:box.r,y2:box.b,stroke:css("--line-2"),"stroke-width":1}));
+  g.appendChild(el("line",{x1:box.l,y1:box.t,x2:box.l,y2:box.b,stroke:css("--line-2"),"stroke-width":1}));
+  const tx = el("text",{x:(box.l+box.r)/2,y:box.b+34,fill:css("--ink-3"),"font-size":11,"text-anchor":"middle","font-family":"var(--font-mono)"});
+  tx.textContent = xl; g.appendChild(tx);
+  const ty = el("text",{x:box.l-34,y:(box.t+box.b)/2,fill:css("--ink-3"),"font-size":11,"text-anchor":"middle","font-family":"var(--font-mono)",transform:`rotate(-90 ${box.l-34} ${(box.t+box.b)/2})`});
+  ty.textContent = yl; g.appendChild(ty);
+  svg.appendChild(g);
+}
+function path(svg, pts, col, w, dash){
+  const d = pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+  svg.appendChild(el("path",{d, fill:"none", stroke:col, "stroke-width":w||2,
+    "stroke-linejoin":"round","stroke-linecap":"round", ...(dash?{"stroke-dasharray":dash}:{})}));
+}
+function axisText(svg, x, y, txt, anchor){
+  const t = el("text",{x,y,fill:css("--ink-3"),"font-size":10,"text-anchor":anchor||"middle","font-family":"var(--font-mono)"});
+  t.textContent = txt; svg.appendChild(t);
+}
+
+/* bus chart: commanded vs held */
+function busChart(){
+  const svg = document.getElementById("busfig"); svg.textContent = "";
+  const B = {l:48,r:430,t:14,b:168}, d = D.bus_demo, N = 55;
+  const t = d.t.slice(0,N), c = d.cmd.slice(0,N), e = d.eff.slice(0,N);
+  const lo = Math.min(...c,...e), hi = Math.max(...c,...e), pad = (hi-lo)*0.12 || 0.01;
+  const px = i => B.l + (i/(N-1))*(B.r-B.l);
+  const py = v => B.b - ((v-lo+pad)/((hi-lo)+2*pad))*(B.b-B.t);
+  axes(svg,B,"time (s)","joint 2 (rad)");
+  const step = arr => { const p=[]; for(let i=0;i<N;i++){ if(i) p.push([px(i),py(arr[i-1])]); p.push([px(i),py(arr[i])]); } return p; };
+  path(svg, step(c), css("--ink-3"), 2, "4 3");
+  path(svg, step(e), css("--s1"), 2.5);
+  [0,Math.floor(N/2),N-1].forEach(i => axisText(svg, px(i), B.b+16, t[i].toFixed(2)));
+  axisText(svg, B.l-6, py(hi)+3, hi.toFixed(2), "end"); axisText(svg, B.l-6, py(lo)+3, lo.toFixed(2), "end");
+  const lg = el("g",{});
+  lg.appendChild(el("line",{x1:B.l,y1:196,x2:B.l+18,y2:196,stroke:css("--ink-3"),"stroke-width":2,"stroke-dasharray":"4 3"}));
+  let a = el("text",{x:B.l+24,y:200,fill:css("--ink-2"),"font-size":11}); a.textContent="commanded"; lg.appendChild(a);
+  lg.appendChild(el("line",{x1:B.l+118,y1:196,x2:B.l+136,y2:196,stroke:css("--s1"),"stroke-width":2.5}));
+  let b2 = el("text",{x:B.l+142,y:200,fill:css("--ink-2"),"font-size":11}); b2.textContent="held by the servo"; lg.appendChild(b2);
+  svg.appendChild(lg);
+}
+/* encoder staircase */
+function encChart(){
+  const svg = document.getElementById("encfig"); svg.textContent = "";
+  const B = {l:56,r:430,t:14,b:168}, d = D.bus_demo, s = 28, N = 34;
+  const tr = d.q_true.slice(s,s+N), ob = d.q_obs.slice(s,s+N), t = d.t.slice(s,s+N);
+  const lo = Math.min(...tr,...ob), hi = Math.max(...tr,...ob), pad=(hi-lo)*0.18||1e-3;
+  const px = i => B.l + (i/(N-1))*(B.r-B.l);
+  const py = v => B.b - ((v-lo+pad)/((hi-lo)+2*pad))*(B.b-B.t);
+  axes(svg,B,"time (s)","joint 2 (rad)");
+  path(svg, tr.map((v,i)=>[px(i),py(v)]), css("--ink-3"), 2, "4 3");
+  const st=[]; for(let i=0;i<N;i++){ if(i) st.push([px(i),py(ob[i-1])]); st.push([px(i),py(ob[i])]); }
+  path(svg, st, css("--s2"), 2.5);
+  [0,Math.floor(N/2),N-1].forEach(i => axisText(svg, px(i), B.b+16, t[i].toFixed(2)));
+  axisText(svg, B.l-6, py(hi)+3, hi.toFixed(3), "end"); axisText(svg, B.l-6, py(lo)+3, lo.toFixed(3), "end");
+  const lg = el("g",{});
+  lg.appendChild(el("line",{x1:B.l,y1:196,x2:B.l+18,y2:196,stroke:css("--ink-3"),"stroke-width":2,"stroke-dasharray":"4 3"}));
+  let a=el("text",{x:B.l+24,y:200,fill:css("--ink-2"),"font-size":11}); a.textContent="true angle"; lg.appendChild(a);
+  lg.appendChild(el("line",{x1:B.l+104,y1:196,x2:B.l+122,y2:196,stroke:css("--s2"),"stroke-width":2.5}));
+  let b2=el("text",{x:B.l+128,y:200,fill:css("--ink-2"),"font-size":11}); b2.textContent="what the encoder reports"; lg.appendChild(b2);
+  svg.appendChild(lg);
+}
+/* spectrum */
+let specKey = "push_only";
+function specChart(){
+  const svg = document.getElementById("specfig"); svg.textContent = "";
+  const S = D.spectra[specKey], n = D.param_names.length;
+  const B = {l:74,r:424,t:10,b:246};
+  const logs = S.eigvals.map(v => v>0 ? Math.log10(v) : null);
+  const finite = logs.filter(v => v!==null);
+  const hi = Math.max(...finite), lo = Math.min(...finite);
+  const bh = (B.b-B.t)/n;
+  const cut = Math.log10(Math.max(...S.eigvals) * 1e-3);
+  for(let i=n-1;i>=0;i--){
+    const r = n-1-i, y = B.t + r*bh + 2.5, h = bh-5;
+    const v = logs[i];
+    const steep = S.eigvals[i] > Math.max(...S.eigvals)*1e-3;
+    const w = v===null ? 3 : Math.max(3, ((v-lo+0.6)/(hi-lo+0.6))*(B.r-B.l));
+    svg.appendChild(el("rect",{x:B.l,y,width:w,height:h,rx:3,
+      fill: v===null ? css("--bad") : (steep ? css("--s1") : css("--s2")), opacity: v===null?1:.9}));
+    const vec = S.eigvecs.map(row => row[i]);
+    let bi=0; vec.forEach((q,j)=>{ if(Math.abs(q)>Math.abs(vec[bi])) bi=j; });
+    const lab = el("text",{x:B.l-7,y:y+h/2+3.5,fill:css("--ink-2"),"font-size":10,"text-anchor":"end","font-family":"var(--font-mono)"});
+    lab.textContent = D.param_names[bi]; svg.appendChild(lab);
+    if(v===null){
+      const z = el("text",{x:B.l+10,y:y+h/2+3.5,fill:css("--bad"),"font-size":10,"font-family":"var(--font-mono)"});
+      z.textContent = "exactly zero — invisible to the data"; svg.appendChild(z);
+    }
+  }
+  svg.appendChild(el("line",{x1:B.l,y1:B.t,x2:B.l,y2:B.b,stroke:css("--line-2"),"stroke-width":1}));
+  axisText(svg, B.l, B.b+18, "flat", "start"); axisText(svg, B.r, B.b+18, "steep →", "end");
+  const t2 = el("text",{x:(B.l+B.r)/2,y:B.b+36,fill:css("--ink-3"),"font-size":11,"text-anchor":"middle","font-family":"var(--font-mono)"});
+  t2.textContent = "curvature of the fit (log scale)"; svg.appendChild(t2);
+  const lg = el("g",{});
+  lg.appendChild(el("rect",{x:B.l,y:B.b+48,width:13,height:8,rx:2,fill:css("--s1")}));
+  let a=el("text",{x:B.l+20,y:B.b+56,fill:css("--ink-2"),"font-size":11}); a.textContent="pinned down by the data"; lg.appendChild(a);
+  lg.appendChild(el("rect",{x:B.l+178,y:B.b+48,width:13,height:8,rx:2,fill:css("--s2")}));
+  let b2=el("text",{x:B.l+198,y:B.b+56,fill:css("--ink-2"),"font-size":11}); b2.textContent="labelled unidentifiable"; lg.appendChild(b2);
+  svg.appendChild(lg);
+  document.getElementById("speccap").innerHTML =
+    `Each bar is one direction in parameter space, labelled by the parameter that dominates it. With <strong>${S.n_push} pushes${S.n_free?" and "+S.n_free+" free sweeps":""}</strong>, <strong class="mono">${S.eff_rank}</strong> of ${n} directions clear the cutoff and <strong class="mono">${S.flat_dim}</strong> fall below it.`;
+}
+document.querySelectorAll(".spec").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".spec").forEach(o => o.setAttribute("aria-pressed", String(o===b)));
+  specKey = b.dataset.spec; specChart();
+}));
+
+/* F5 table + sweep */
+(function(){
+  const rows = [
+    ["30 pushes", D.spectra.push_only, D.demoA.familiar.stiff.whitened_rms, D.demoA.familiar.flat.whitened_rms],
+    ["30 pushes + 8 free sweeps", D.spectra.mixed, D.sweep[3].stiff, D.sweep[3].flat],
+  ];
+  document.getElementById("f5tbl").innerHTML = rows.map(([n,S,a,b]) =>
+    `<tr><td>${n}</td><td class="num">${S.eff_rank} / 18</td>
+     <td class="num" style="color:var(--s2)">${fmt(a,2)}</td>
+     <td class="num" style="color:var(--s3)">${b<0.005?"0.00":fmt(b,2)}</td></tr>`).join("");
+})();
+function sweepChart(){
+  const svg = document.getElementById("sweepfig"); svg.textContent = "";
+  const B = {l:52,r:428,t:14,b:176}, S = D.sweep;
+  const hi = Math.max(...S.map(s=>Math.max(s.stiff,s.flat)));
+  const px = i => B.l + 26 + (i/(S.length-1))*(B.r-B.l-52);
+  const py = v => B.b - (v/(hi*1.1))*(B.b-B.t);
+  axes(svg,B,"size of the parameter error","divergence");
+  [0,hi/2,hi].forEach(v => { axisText(svg, B.l-6, py(v)+3, v.toFixed(1), "end");
+    svg.appendChild(el("line",{x1:B.l,y1:py(v),x2:B.r,y2:py(v),stroke:css("--line"),"stroke-width":1})); });
+  path(svg, S.map((s,i)=>[px(i),py(s.stiff)]), css("--s2"), 2.5);
+  path(svg, S.map((s,i)=>[px(i),py(s.flat)]), css("--s3"), 2.5);
+  S.forEach((s,i) => {
+    svg.appendChild(el("circle",{cx:px(i),cy:py(s.stiff),r:4.5,fill:css("--s2"),stroke:css("--surface"),"stroke-width":2}));
+    svg.appendChild(el("circle",{cx:px(i),cy:py(s.flat),r:4.5,fill:css("--s3"),stroke:css("--surface"),"stroke-width":2}));
+    axisText(svg, px(i), B.b+16, s.mag.toFixed(2));
+  });
+  const last = S[S.length-1];
+  let a = el("text",{x:px(S.length-1)-8,y:py(last.stiff)+4,fill:css("--s2"),"font-size":11,"text-anchor":"end","font-weight":600});
+  a.textContent = "steep"; svg.appendChild(a);
+  let b = el("text",{x:px(S.length-1)-8,y:py(last.flat)+4,fill:css("--s3"),"font-size":11,"text-anchor":"end","font-weight":600});
+  b.textContent = "flat"; svg.appendChild(b);
+  const lg = el("text",{x:B.l,y:B.b+42,fill:css("--ink-2"),"font-size":11});
+  lg.textContent = "the direction labelled “flat” diverges more at every size"; svg.appendChild(lg);
+}
+
+/* ---------------- boot ---------------- */
+function renderAll(){ fit(); busChart(); encChart(); specChart(); sweepChart(); }
+scrub.max = nFrames()-1;
+renderAll();
+addEventListener("resize", () => { clearTimeout(window.__rt); window.__rt = setTimeout(renderAll, 140); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderAll);
+new MutationObserver(renderAll).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+})();
+</script>
